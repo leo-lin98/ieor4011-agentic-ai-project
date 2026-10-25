@@ -1,0 +1,8 @@
+.venv/
+.env
+__pycache__/
+.DS_Store
+Data/raw/*.json
+Data/raw/*.csv
+Data/processed/
+.Arbitrage/
