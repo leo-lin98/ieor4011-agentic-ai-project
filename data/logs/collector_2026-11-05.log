@@ -1,0 +1,35 @@
+2026-11-05 23:09:59,279 INFO collector: kalshi series loaded: 15834
+2026-11-05 23:10:47,990 INFO collector: polyus catalog: {'rows': 79142, 'seen': 79142, 'new': 79142, 'changed': 0, 'carried': 0, 'events': 5522, 'requests': 827, 'seconds': 50.4} stale_flags=0
+2026-11-05 23:10:48,992 INFO collector: kalshi series loaded: 15834
+2026-11-05 23:10:59,475 INFO collector: polyus: 121 priced markets not yet in catalog (picked up next catalog refresh)
+2026-11-05 23:11:26,798 INFO collector: kalshi catalog: {'rows': 185698, 'seen': 185698, 'new': 185698, 'changed': 0, 'carried': 0} stale_flags=0
+2026-11-05 23:11:26,865 INFO collector: tick 1793920247000 KALSHI open_markets=182539 open_events=21803 written=185698 req=111 429s=1 37.8s 423MB
+2026-11-05 23:11:26,866 INFO collector: tick 1793920247000 POLYUS open_markets=78382 open_events=5516 written=78402 req=162 429s=0 11.5s 231MB
+2026-11-05 23:13:00,999 INFO collector: kalshi series loaded: 15834
+2026-11-05 23:13:03,293 INFO collector: polyus stats sweep: 26981 markets (~75 min)
+2026-11-05 23:13:11,139 INFO collector: polyus: 134 priced markets not yet in catalog (picked up next catalog refresh)
+2026-11-05 23:13:26,112 INFO collector: tick 1793920380000 KALSHI open_markets=182551 open_events=21803 written=185750 req=112 429s=2 25.1s 423MB
+2026-11-05 23:13:26,114 INFO collector: tick 1793920380000 POLYUS open_markets=78392 open_events=5515 written=78411 req=195 429s=0 11.1s 231MB
+2026-11-05 23:14:12,734 INFO collector: polyus: 134 priced markets not yet in catalog (picked up next catalog refresh)
+2026-11-05 23:14:27,976 INFO collector: tick 1793920440000 KALSHI open_markets=182551 open_events=21803 written=8557 req=110 429s=0 28.0s 423MB
+2026-11-05 23:14:27,979 INFO collector: tick 1793920440000 POLYUS open_markets=78380 open_events=5513 written=1742 req=225 429s=0 12.7s 231MB
+2026-11-05 23:15:11,353 INFO collector: polyus: 142 priced markets not yet in catalog (picked up next catalog refresh)
+2026-11-05 23:15:25,801 INFO collector: tick 1793920500000 KALSHI open_markets=182679 open_events=21807 written=10128 req=113 429s=3 25.8s 423MB
+2026-11-05 23:15:25,803 INFO collector: tick 1793920500000 POLYUS open_markets=78384 open_events=5511 written=1663 req=217 429s=0 11.3s 231MB
+2026-11-05 23:15:47,132 INFO collector: stopped
+2026-11-05 23:18:00,991 INFO collector: kalshi series loaded: 15834
+2026-11-05 23:18:09,985 INFO collector: polyus: 227 priced markets not yet in catalog (picked up next catalog refresh)
+2026-11-05 23:18:26,668 INFO collector: tick 1793920680000 KALSHI open_markets=182726 open_events=21817 written=185919 req=112 429s=2 25.6s 423MB
+2026-11-05 23:18:26,671 INFO collector: tick 1793920680000 POLYUS open_markets=78459 open_events=5501 written=78478 req=162 429s=0 9.9s 231MB
+2026-11-05 23:18:26,694 INFO collector: polyus stats sweep: 78459 markets (~218 min)
+2026-11-05 23:19:11,894 INFO collector: polyus: 226 priced markets not yet in catalog (picked up next catalog refresh)
+2026-11-05 23:19:18,945 INFO collector: stopped
+2026-11-05 23:22:00,972 INFO collector: kalshi series loaded: 15834
+2026-11-05 23:22:13,040 INFO collector: polyus: 231 priced markets not yet in catalog (picked up next catalog refresh)
+2026-11-05 23:22:26,702 INFO collector: tick 1793920920000 KALSHI open_markets=182831 open_events=21809 written=185962 req=112 429s=2 25.7s 423MB
+2026-11-05 23:22:26,703 INFO collector: tick 1793920920000 POLYUS open_markets=78454 open_events=5499 written=78473 req=162 429s=0 13.0s 231MB
+2026-11-05 23:23:08,537 INFO collector: polyus: 231 priced markets not yet in catalog (picked up next catalog refresh)
+2026-11-05 23:23:26,858 INFO collector: tick 1793920980000 KALSHI open_markets=182826 open_events=21806 written=7863 req=112 429s=2 26.8s 424MB
+2026-11-05 23:23:26,863 INFO collector: tick 1793920980000 POLYUS open_markets=78434 open_events=5498 written=1540 req=162 429s=0 8.4s 231MB
+2026-11-05 23:24:11,203 INFO collector: polyus: 231 priced markets not yet in catalog (picked up next catalog refresh)
+2026-11-05 23:24:26,336 INFO collector: stopped
