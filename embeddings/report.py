@@ -10,6 +10,7 @@ def escape(value):
     return html.escape(str(value if value is not None else ""), quote=True)
 
 
+# Format each contract for inspection, escaping profile text before inserting HTML.
 def render_market(m):
     title = m.get("title") or "Untitled event"
     market = m.get("market_title") or "Market title unavailable"
@@ -37,6 +38,7 @@ def render_event(event):
             f'<details><summary>Inspect contract options</summary><ol>{options}</ol></details>')
 
 
+# Provide separate review outcomes for an event and for each candidate pair.
 def review_controls(query_id, candidate_id=None):
     query = escape(query_id)
     candidate = escape(candidate_id or "")
@@ -51,6 +53,7 @@ def review_controls(query_id, candidate_id=None):
             '<label>Notes <textarea class="review-notes" rows="2" placeholder="What did you check?"></textarea></label>'
             '<span class="review-status" role="status"></span></div>')
 
+# Assemble the candidate cards and embed the review interface in one HTML page.
 def render(data):
     meta = data.get("metadata", {})
     sections = []

@@ -9,11 +9,13 @@ from .prepare import event_text
 def embed_events(events, model, model_name, revision, representation, role, cache_path, progress=print):
     path = Path(cache_path)
     path.parent.mkdir(parents=True, exist_ok=True)
+    # Fingerprint the event text and model settings so changed inputs get new vectors.
     texts = [event_text(e, representation) for e in events]
     keys = [(e['platform'], e['event_uid'], hashlib.sha256(t.encode()).hexdigest(), model_name, revision, representation, role) for e, t in zip(events, texts)]
     vectors = [None] * len(events)
     with sqlite3.connect(path) as db:
         db.execute('CREATE TABLE IF NOT EXISTS embeddings (platform TEXT, event_id TEXT, fingerprint TEXT, model TEXT, revision TEXT, representation TEXT, role TEXT, vector BLOB NOT NULL, PRIMARY KEY(platform,event_id,fingerprint,model,revision,representation,role))')
+        # Reuse vectors already stored in SQLite and collect the cache misses.
         missing = []
         for i, key in enumerate(keys):
             row = db.execute('SELECT vector FROM embeddings WHERE platform=? AND event_id=? AND fingerprint=? AND model=? AND revision=? AND representation=? AND role=?', key).fetchone()

@@ -3,6 +3,7 @@ from pathlib import Path
 import pandas as pd
 
 def event_volumes(snapshot_dir, profile_path):
+    # Take the latest snapshot per market and join it to Kalshi event profiles.
     files = sorted(Path(snapshot_dir).rglob('*.parquet'))
     if not files:
         raise ValueError(f'No pricing snapshots in {snapshot_dir}')
@@ -12,6 +13,7 @@ def event_volumes(snapshot_dir, profile_path):
     profiles = profiles[profiles['platform'] == 'KALSHI'].drop_duplicates('market_uid')
     rows = profiles.merge(latest, on='market_uid', how='left')
     groups = rows.groupby('event_uid', dropna=True)
+    # Sum observed market volumes and report how many contracts had data.
     result = {}
     for uid, group in groups:
         values = pd.to_numeric(group['volume'], errors='coerce')

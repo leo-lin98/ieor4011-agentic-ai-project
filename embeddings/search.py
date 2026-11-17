@@ -10,6 +10,7 @@ def norm(value):
     return value.strip().casefold() if isinstance(value, str) else ""
 
 def configs():
+    # Validate and normalize the platform mappings; hash them for reproducibility.
     raw = [(CONFIG / f).read_bytes() for f in ("categories.json", "sports.json")]
     categories, sports = (json.loads(x) for x in raw)
     if not isinstance(categories, dict) or not all(isinstance(k, str) and isinstance(v, list) and v and all(isinstance(x, str) and norm(x) for x in v) for k, v in categories.items()):
@@ -39,6 +40,7 @@ def sport(row, mappings, platform):
     return next(iter(found)) if len(found) == 1 else None
 
 def eligible(query, candidate, categories, sports):
+    # Exclude known category or sport conflicts while retaining uncertain cases.
     allowed = categories.get(norm(query.get("category")))
     category = norm(candidate.get("category"))
     known = {c for values in categories.values() for c in values}
@@ -50,6 +52,7 @@ def eligible(query, candidate, categories, sports):
     return True
 
 def rank(query, candidates, query_vector, candidate_vectors, k, categories, sports):
+    # Dot products give cosine similarity because the embeddings are normalized.
     mask = np.fromiter((eligible(query, c, categories, sports) for c in candidates), dtype=bool, count=len(candidates))
     indices = np.flatnonzero(mask)
     scores = candidate_vectors[indices] @ query_vector

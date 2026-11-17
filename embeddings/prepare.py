@@ -22,6 +22,7 @@ def clean(value):
     return value.strip() if isinstance(value, str) and value.strip() else None
 
 def build_events(profiles):
+    # Group contracts by platform and event, recording incomplete or conflicting data.
     groups = defaultdict(list)
     issues = Counter()
     for row in profiles:
@@ -64,6 +65,7 @@ def event_text(event, representation, max_options=12, max_chars=200):
     title = event.get('title') or ''
     if representation == 'title': return title
     if representation != 'title_options': raise ValueError('Unknown representation: ' + representation)
+    # Use a bounded, deterministic set of option labels when requested.
     options = sorted({(clean(c.get('yes_means')) or clean(c.get('market_title')) or '')[:max_chars]
                       for c in event['contracts']} - {''}, key=lambda x: (x.casefold(), x))[:max_options]
     return '\n'.join([title] + ['Option: ' + o for o in options])

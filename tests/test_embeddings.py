@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 from embeddings.prepare import build_events, event_text
 from embeddings.cache import embed_events
-from embeddings.search import configs, eligible, rank
+from embeddings.search import configs, eligible, rank, sport
 from embeddings.report import render
 from evaluation.retrieval.evaluate import evaluate
 
@@ -41,6 +41,17 @@ class RetrievalTests(unittest.TestCase):
         self.assertTrue(eligible(q, {'category':None}, c, s))
         self.assertTrue(eligible({'category':None}, {'category':'politics'}, c, s))
         self.assertEqual(rank({}, [{}, {}], np.array([1.,0.]), np.array([[0.,1.],[1.,0.]]), 2, c, s)[0][0], 1)
+    def test_expanded_sports_mapping(self):
+        c, s, _ = configs()
+        self.assertTrue(eligible({'category': 'sports', 'tags': ['Golf']},
+                                 {'category': 'sports', 'subcategory': 'GOLF'}, c, s))
+        self.assertFalse(eligible({'category': 'sports', 'tags': ['Golf']},
+                                  {'category': 'sports', 'subcategory': 'MMA'}, c, s))
+        self.assertEqual(sport({'subcategory': 'EFOOTBALL', 'tags': ['Esports']}, s, 'POLYUS'), 'esports')
+        self.assertIsNone(sport({'subcategory': 'COMBAT'}, s, 'POLYUS'))
+        self.assertIsNone(sport({'subcategory': 'EFOOTBALL', 'tags': ['Football']}, s, 'POLYUS'))
+        self.assertTrue(eligible({'category': 'sports', 'tags': ['Boxing']},
+                                 {'category': 'sports', 'subcategory': 'COMBAT'}, c, s))
     def test_evaluation_and_report(self):
         events, _ = build_events(self.rows)
         data = {'metadata': {'candidate_ids':['p']}, 'results':[{'query':events[0], 'candidates':[{'event':events[1], 'score':.9}], 'ranked_candidate_ids':['p'], 'excluded_candidate_ids':[]}]}

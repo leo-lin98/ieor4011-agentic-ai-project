@@ -1,1 +1,11 @@
-{"sports":["sports"],"politics":["politics","geopolitics"],"elections":["politics","geopolitics"],"financials":["finance","macro"],"economics":["macro","finance"],"entertainment":["culture"],"science and technology":["science","technology"],"climate and weather":["climate"],"crypto":["crypto"]}
+{
+  "sports": ["sports", "culture"],
+  "politics": ["politics", "geopolitics", "macro", "finance", "technology", "climate", "science", "culture"],
+  "elections": ["politics", "geopolitics", "macro", "finance", "culture"],
+  "financials": ["finance", "macro", "technology", "crypto", "politics"],
+  "economics": ["macro", "finance", "politics", "geopolitics", "climate"],
+  "entertainment": ["culture", "sports", "politics", "technology"],
+  "science and technology": ["science", "technology", "climate", "finance", "politics", "crypto"],
+  "climate and weather": ["climate", "science", "macro", "politics", "geopolitics"],
+  "crypto": ["crypto", "finance", "technology", "macro", "politics"]
+}

@@ -39,6 +39,7 @@ def main():
     if a.queries < 1 or a.top_k < 1 or (a.candidates is not None and a.candidates < 1): p.error('sizes must be positive')
     start = time.perf_counter()
     def progress(message): print(f'[{time.perf_counter()-start:,.1f}s elapsed] {message}', flush=True)
+    # Build event-level queries and candidates from the market profiles.
     progress('Loading profiles and grouping events...')
     df = load(a.profiles).astype(object).where(lambda x: pd.notna(x), None)
     events, issues = build_events(df.to_dict('records'))
@@ -53,6 +54,7 @@ def main():
         queries = [queries[i] for i in np.linspace(0, len(queries)-1, a.queries, dtype=int)]
     if a.candidates: candidates = candidates[:a.candidates]
     if not queries or not candidates: raise ValueError('Both platforms must have events')
+    # Pin the model revision, then create or reuse normalized embeddings.
     from sentence_transformers import SentenceTransformer
     progress(f'Resolving revision {a.revision} for {a.model}...')
     revision = resolve_revision(a.model, a.revision)
@@ -61,6 +63,7 @@ def main():
     progress(f'Model device: {model.device}; revision: {revision}')
     q = embed_events(queries, model, a.model, revision, a.representation, 'query', a.cache, progress)
     c = embed_events(candidates, model, a.model, revision, a.representation, 'document', a.cache, progress)
+    # Record the retrieval configuration alongside the ranked results.
     categories, sports, mapping_hash = configs()
     out = Path(a.output); out.parent.mkdir(parents=True, exist_ok=True)
     metadata = {'model': a.model, 'revision': a.revision, 'resolved_revision': revision, 'representation': a.representation,

@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from .report import render
 
 def iter_results(path):
+    # Decode one result at a time so large retrieval files need not fit in memory.
     decoder = json.JSONDecoder()
     with open(path, encoding='utf-8') as f:
         buffer = ''; eof = False
@@ -63,6 +64,7 @@ def main():
         from .volume import event_volumes
         volume_by_event, snapshot_ms = event_volumes(a.volume_snapshots, a.profiles)
         snapshot_time = datetime.fromtimestamp(snapshot_ms / 1000, timezone.utc).strftime('%Y-%m-%d %H:%M UTC')
+    # Write each batch as a standalone report, optionally compressed for the browser.
     def write_batch():
         nonlocal batch
         first = a.start + count - len(batch)
@@ -80,6 +82,7 @@ def main():
         (out / filename).write_text(content, encoding='utf-8')
         links.append(f'<li><a href="{html.escape(filename)}">Events {first:,}–{last:,}</a></li>')
         batch = []
+    # Filter and paginate results, adding volume data for the optional index.
     selected = 0
     categories = {c.strip().casefold() for c in a.category or []}
     for item in iterator:
