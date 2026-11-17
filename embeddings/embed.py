@@ -3,11 +3,23 @@ import argparse
 import json
 import time
 from pathlib import Path
+import re
 import numpy as np
 import pandas as pd
 from .prepare import load, build_events
 from .cache import embed_events
 from .search import configs, rank, eligible
+
+def resolve_revision(model_name, revision):
+    """Resolve the exact Hub snapshot before loading weights or looking up vectors."""
+    if re.fullmatch(r'[0-9a-f]{40}', revision):
+        return revision
+    from huggingface_hub import hf_hub_download
+    config_path = Path(hf_hub_download(repo_id=model_name, filename='config.json', revision=revision))
+    for parent in config_path.parents:
+        if parent.parent.name == 'snapshots' and re.fullmatch(r'[0-9a-f]{40}', parent.name):
+            return parent.name
+    raise ValueError('Could not resolve model revision; pass a pinned 40-character commit with --revision')
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
@@ -18,6 +30,7 @@ def main():
     p.add_argument('--query-id', action='append', help='Kalshi event ID; repeat to select specific events')
     p.add_argument('--candidates', type=int, default=None, help='Limit candidate events (default: all)')
     p.add_argument('--top-k', type=int, default=10)
+    p.add_argument('--top-only', action='store_true', help='Stream top matches only; full-rank evaluation is unavailable')
     p.add_argument('--representation', choices=('title', 'title_options'), default='title')
     p.add_argument('--model', default='google/embeddinggemma-300m')
     p.add_argument('--revision', default='main')
@@ -41,28 +54,34 @@ def main():
     if a.candidates: candidates = candidates[:a.candidates]
     if not queries or not candidates: raise ValueError('Both platforms must have events')
     from sentence_transformers import SentenceTransformer
+    progress(f'Resolving revision {a.revision} for {a.model}...')
+    revision = resolve_revision(a.model, a.revision)
     progress(f'Loading model {a.model}; {len(queries):,} queries and {len(candidates):,} candidates.')
-    model = SentenceTransformer(a.model, revision=a.revision, device=a.device)
-    resolved = getattr(getattr(model[0], 'auto_model', None), 'config', None)
-    resolved = getattr(resolved, '_commit_hash', None) or getattr(model, '_model_config', {}).get('_commit_hash')
-    # A moving branch without a resolved commit cannot safely identify model weights.
-    if not resolved and a.revision in ('main', 'master'):
-        raise ValueError('Could not resolve model revision; pass a pinned model commit with --revision for safe caching')
-    revision = resolved or a.revision
+    model = SentenceTransformer(a.model, revision=revision, device=a.device)
     progress(f'Model device: {model.device}; revision: {revision}')
     q = embed_events(queries, model, a.model, revision, a.representation, 'query', a.cache, progress)
     c = embed_events(candidates, model, a.model, revision, a.representation, 'document', a.cache, progress)
     categories, sports, mapping_hash = configs()
-    results = []
-    for i, query in enumerate(queries):
-        progress(f'Ranking {i+1:,}/{len(queries):,}: {query["event_uid"]}')
-        matches = rank(query, candidates, q[i], c, len(candidates), categories, sports)
-        results.append({'query': query, 'candidates': [{'event': candidates[j], 'score': score} for j, score in matches[:a.top_k]],
-                        'ranked_candidate_ids': [candidates[j]['event_uid'] for j, _ in matches],
-                        'excluded_candidate_ids': [e['event_uid'] for e in candidates if not eligible(query, e, categories, sports)]})
-    payload = {'metadata': {'model': a.model, 'revision': a.revision, 'resolved_revision': revision, 'representation': a.representation,
-                            'mapping_sha256': mapping_hash, 'candidate_ids': [x['event_uid'] for x in candidates], 'profile_issues': issues}, 'results': results}
     out = Path(a.output); out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(payload, indent=2, default=lambda x: x.tolist() if hasattr(x, 'tolist') else str(x)))
-    progress(f'Wrote {len(results):,} event queries to {out}.')
+    metadata = {'model': a.model, 'revision': a.revision, 'resolved_revision': revision, 'representation': a.representation,
+                'mapping_sha256': mapping_hash, 'candidate_ids': [x['event_uid'] for x in candidates],
+                'profile_issues': issues, 'top_only': a.top_only}
+    if a.top_only:
+        metadata['candidate_events'] = candidates
+    def serialize(value):
+        return json.dumps(value, default=lambda x: x.tolist() if hasattr(x, 'tolist') else str(x))
+    # Stream each result to avoid retaining the entire catalog's review records in memory.
+    with out.open('w', encoding='utf-8') as f:
+        f.write('{"metadata":' + serialize(metadata) + ',"results":[')
+        for i, query in enumerate(queries):
+            if i % 100 == 0: progress(f'Ranking {i+1:,}/{len(queries):,}: {query["event_uid"]}')
+            matches = rank(query, candidates, q[i], c, a.top_k if a.top_only else len(candidates), categories, sports)
+            result = {'query': query, 'candidates': [({'event_uid': candidates[j]['event_uid'], 'score': score} if a.top_only else {'event': candidates[j], 'score': score}) for j, score in matches[:a.top_k]]}
+            if not a.top_only:
+                result['ranked_candidate_ids'] = [candidates[j]['event_uid'] for j, _ in matches]
+                result['excluded_candidate_ids'] = [e['event_uid'] for e in candidates if not eligible(query, e, categories, sports)]
+            if i: f.write(',')
+            f.write(serialize(result))
+        f.write(']}')
+    progress(f'Wrote {len(queries):,} event queries to {out}.')
 if __name__ == '__main__': main()

@@ -6,6 +6,8 @@ from collections import defaultdict
 from pathlib import Path
 
 def evaluate(data, cases):
+    if data['metadata'].get('top_only'):
+        raise ValueError('Full-rank evaluation requires results generated without --top-only')
     by_query = {r['query']['event_uid']: r for r in data['results']}
     pool = set(data['metadata']['candidate_ids'])
     groups = defaultdict(list)

@@ -23,3 +23,11 @@ python -m evaluation.retrieval.evaluate data/embeddings/options.json evaluation/
 ```
 
 Evaluation records full eligible-pool ranks even when `--top-k` limits the report, identifies filter exclusions, and computes recall at 5 and 10 for matching labels by split. Missing labeled queries or candidates are errors. Choose a representation using development results and assess it on held-out groups. Contract options are displayed for manual comparison within each event pair. For a separate lexical contract baseline, add reviewed contract pairs to `evaluation/retrieval/contract_cases.csv`, ensure the known event pairs appear among the returned cards (increase `--top-k` as needed), and run `python -m evaluation.retrieval.contracts data/embeddings/candidates.json evaluation/retrieval/contract_cases.csv`. Contract and event labels still need independent review. Similarity is a retrieval signal, not proof of equivalence. Profiles are a snapshot and may be stale.
+
+## Recording reviews in the report
+
+Each candidate card has a review selector and notes. The Kalshi card also has a separate “No match found among displayed suggestions” choice; it does not claim no match exists elsewhere in the pool. Set the reviewer and split before recording a decision. Those settings apply to reviews saved or edited afterward. Each review defaults its event group to the Kalshi event ID; edit the CSV to put related events in the same group before evaluation.
+
+The browser saves reviews locally, subject to its storage settings and its handling of `file:` pages. Download the reviews CSV as a backup. Use Import reviews CSV to merge a previous export into another report page; existing reviews take precedence when a pair appears in both. The export is not written automatically into `evaluation/retrieval/cases.csv`; move or merge it there when ready. `no_match_found` rows are notes and do not count toward recall. Reviews and exports may be lost if browser storage is cleared, so export regularly.
+
+For the compact full-run output, render manageable ranges using `python -m embeddings.report_batches data/embeddings/full-candidates.json data/embeddings/review-101 --start 101 --limit 100`. Import the previous CSV before reviewing another page, then download an updated CSV to carry your reviews forward.
