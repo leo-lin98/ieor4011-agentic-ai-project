@@ -1,4 +1,10 @@
-"""Load market profiles and assemble deterministic event records."""
+"""Convert market profiles into consistent event records and embedding text.
+
+Profiles are grouped by platform and event ID, with conflicting or missing fields
+recorded as issues. Event text uses the title alone or adds a limited, sorted set
+of contract options. The outputs are event records, issue counts, and text ready
+for embedding.
+"""
 from collections import Counter, defaultdict
 import json
 import pandas as pd

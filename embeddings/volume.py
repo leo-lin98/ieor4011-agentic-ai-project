@@ -1,4 +1,9 @@
-"""Aggregate the latest observed Kalshi traded-contract volume by event."""
+"""Summarize the latest observed Kalshi traded-contract volume by event.
+
+Pricing snapshots are reduced to the latest row for each market and joined to
+Kalshi market profiles. The output maps event IDs to total observed volume and
+coverage counts, along with the latest snapshot timestamp.
+"""
 from pathlib import Path
 import pandas as pd
 

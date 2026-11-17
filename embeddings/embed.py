@@ -1,4 +1,10 @@
-"""Retrieve Polymarket events for a varied sample of Kalshi events."""
+"""Find Polymarket event candidates for selected Kalshi events.
+
+The command groups market profiles into events, selects queries, loads a pinned
+embedding model, and ranks eligible candidates by vector similarity. It writes
+JSON containing run metadata, event queries, and ranked candidates; the optional
+top-only mode writes a smaller result without full ranking information.
+"""
 import argparse
 import json
 import time

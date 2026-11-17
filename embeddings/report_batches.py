@@ -1,4 +1,9 @@
-"""Render a large streamed retrieval result as a directory of smaller reports."""
+"""Split a large retrieval result into manageable HTML review reports.
+
+The command reads results incrementally, filters and groups them into batches,
+and can add volume information or compress report pages. It writes report files
+and an index linking to them in the requested output directory.
+"""
 import argparse
 import base64
 import gzip

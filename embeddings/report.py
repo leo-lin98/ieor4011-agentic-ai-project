@@ -1,4 +1,9 @@
-"""Render retrieval results as a self-contained HTML review report."""
+"""Create a self-contained HTML report for reviewing retrieval results.
+
+The report formats each query and candidate with contract details, similarity
+scores, and review controls, escaping profile text before placing it in HTML. It
+outputs an HTML page that supports inspecting and recording review decisions.
+"""
 import argparse
 import html
 import json

@@ -1,4 +1,9 @@
-"""Persistent, content-addressed event vectors."""
+"""Generate and persist event embeddings for reuse across retrieval runs.
+
+Event text and model settings form a content-addressed SQLite cache key. Cached
+vectors are loaded when available; missing vectors are encoded in batches and
+committed as they are generated. The output is a NumPy array of event vectors.
+"""
 import hashlib
 import io
 import sqlite3

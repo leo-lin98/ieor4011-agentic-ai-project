@@ -31,3 +31,29 @@ Each candidate card has a review selector and notes. The Kalshi card also has a 
 The browser saves reviews locally, subject to its storage settings and its handling of `file:` pages. Download the reviews CSV as a backup. Use Import reviews CSV to merge a previous export into another report page; existing reviews take precedence when a pair appears in both. The export is not written automatically into `evaluation/retrieval/cases.csv`; move or merge it there when ready. `no_match_found` rows are notes and do not count toward recall. Reviews and exports may be lost if browser storage is cleared, so export regularly.
 
 For the compact full-run output, render manageable ranges using `python -m embeddings.report_batches data/embeddings/full-candidates.json data/embeddings/review-101 --start 101 --limit 100`. Import the previous CSV before reviewing another page, then download an updated CSV to carry your reviews forward.
+
+## Querying results by category and volume
+
+Build a separate SQLite report from an existing retrieval run; this does not load the model or change the vector cache:
+
+```sh
+python -m embeddings.report_db data/embeddings/full-candidates.json data/embeddings/report.sqlite3 \
+  --volume-snapshots data/pricing_snapshots/KALSHI
+sqlite3 -header -column data/embeddings/report.sqlite3
+```
+
+For example, in SQLite, list classified non-sports events with the highest observed total volume and their top candidate:
+
+```sql
+SELECT e.event_uid, e.title, e.category, e.total_volume,
+       e.markets_with_volume, e.market_count,
+       m.candidate_title, m.score
+FROM events AS e
+LEFT JOIN matches AS m ON m.event_uid = e.event_uid AND m.rank = 1
+WHERE e.category IS NOT NULL AND trim(e.category) <> ''
+  AND lower(trim(e.category)) <> 'sports'
+ORDER BY e.total_volume IS NULL, e.total_volume DESC, e.event_uid
+LIMIT 50;
+```
+
+`events` contains the Kalshi queries actually included in that retrieval run; `matches` contains its displayed candidates in similarity order (not the entire eligible pool). Join without the rank condition to see all of them. Category is the saved profile classification; missing or conflicting classifications are excluded by the example, rather than assumed to be non-sports. Volume is the sum of each event's latest saved per-market Kalshi total contract count, not dollar volume or 24-hour volume. `markets_with_volume` and `market_count` reveal partial totals; missing volume is NULL. Different markets may have observations from different times. The latest timestamp across the snapshot files and the source paths are in `run_metadata`. Rebuild the report to pick up a newer retrieval run or snapshots; rebuilding replaces the report database.

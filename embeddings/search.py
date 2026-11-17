@@ -1,4 +1,9 @@
-"""Category-aware exact cosine retrieval over normalized vectors."""
+"""Filter and rank event candidates using category-aware vector similarity.
+
+Configuration files map categories and sports between platforms. Known conflicts
+are excluded, while eligible normalized vectors are ranked by their dot product.
+The output is an ordered list of candidate indices and similarity scores.
+"""
 import hashlib
 import json
 from pathlib import Path
