@@ -6,3 +6,4 @@ Data/raw/*.json
 Data/raw/*.csv
 Data/processed/
 .Arbitrage/
+data/embeddings/
