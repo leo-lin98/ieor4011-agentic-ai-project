@@ -49,8 +49,10 @@ function reviewLabel(eventId) {
 function makeReview(event, suggestions, onSaved, reviewKey = storageKey) {
   const stored = readSafely(reviewKey)?.[event.event_uid] || {};
   const wrapper = el('div', undefined, 'comparison');
-  const heading = el('h3', 'Review suggested events');
-  wrapper.append(heading, el('p', 'Choose likely exact match or possible match for each relevant suggestion. Leave the rest unselected.', 'comparison-intro'));
+  const query = el('div', undefined, 'review-query');
+  query.append(el('span', 'KALSHI QUERY EVENT', 'query-label'), el('h3', event.title || 'Untitled event'), el('small', `${event.category || 'Unclassified'} · ${event.event_uid}`));
+  const heading = el('h3', 'Suggested Polymarket US events', 'suggestions-heading');
+  wrapper.append(query, heading, el('p', 'Choose likely exact match or possible match for each relevant suggestion. Leave the rest unselected.', 'comparison-intro'));
   if (suggestions.length < 10) wrapper.append(el('p', `Only ${suggestions.length} suggestions were saved for this event.`, 'notice'));
   const review = el('form', undefined, 'review-form');
   const list = el('div', undefined, 'candidates');
@@ -61,7 +63,7 @@ function makeReview(event, suggestions, onSaved, reviewKey = storageKey) {
   for (const candidate of suggestions) {
     const row = el('div', undefined, 'candidate'), text = el('div');
     const title = el('strong', candidate.candidate_title || candidate.candidate_uid);
-    const meta = el('small', `#${candidate.rank} · similarity ${Number(candidate.score).toFixed(3)} · ${candidate.candidate_uid}`);
+    const meta = el('small', `Rank ${candidate.rank} · similarity ${Number(candidate.score).toFixed(3)} · ${candidate.candidate_category || 'Unclassified'} · ${candidate.candidate_uid}`);
     const label = el('label', 'Match judgment'), select = el('select');
     for (const [value, description] of [['', 'Not selected'], ['likely_exact', 'Likely exact match'], ['possible', 'Possible match']]) {
       const option = el('option', description); option.value = value; select.append(option);
@@ -217,7 +219,8 @@ function showSample() {
     samplePanel.replaceChildren();
     const panel = el('div', undefined, 'sample-panel');
     const reviewed = set.events.filter(event => all[event.event_uid]).length;
-    panel.append(el('strong', `Event ${sampleIndex + 1} of ${set.events.length} · ${reviewed} reviewed`));
+    const sampleHeading = el('h3', `Event ${sampleIndex + 1} of ${set.events.length} · ${reviewed} reviewed`, 'sample-heading');
+    sampleHeading.tabIndex = -1; panel.append(sampleHeading);
     const progress = el('p');
     function showEvaluationCounts(reviews) {
       const records = set.events.map(event => reviews[event.event_uid]).filter(Boolean);
@@ -230,19 +233,23 @@ function showSample() {
     }
     showEvaluationCounts(all); panel.append(progress);
     panel.append(el('p', `Seed ${set.seed} · ${set.eligible_events.toLocaleString()} eligible events · ${set.method === 'volume' ? 'volume weighted' : 'uniform random'} · ${sampleCategoryLabel(set.category)}`, 'notice'));
-    panel.append(el('div', item.title || 'Untitled event', 'event-title'), el('small', item.event_uid));
     panel.append(el('p', `${item.category || 'Unclassified'} · ${item.total_volume === null ? 'Volume unavailable' : item.total_volume.toLocaleString(undefined, {maximumFractionDigits: 2}) + ' contracts traded'}${item.markets_with_volume < item.market_count ? ' (partial)' : ''}`));
     const review = makeReview(item, item.candidates, () => {
       const reviews = readReviews(sampleReviewsKey(id)), n = set.events.filter(event => reviews[event.event_uid]).length;
-      panel.querySelector('strong').textContent = `Event ${sampleIndex + 1} of ${set.events.length} · ${n} reviewed`; showEvaluationCounts(reviews);
+      sampleHeading.textContent = `Event ${sampleIndex + 1} of ${set.events.length} · ${n} reviewed`; showEvaluationCounts(reviews);
     }, sampleReviewsKey(id));
     panel.append(review);
     panel.append(el('small', 'Save the review before moving to another event.'));
     const nav = el('nav', undefined, 'sample-nav'); nav.setAttribute('aria-label', 'Evaluation events');
     const back = el('button', 'Previous event'), forward = el('button', 'Next event'), download = el('button', 'Download evaluation CSV');
     back.type = forward.type = download.type = 'button'; back.disabled = sampleIndex === 0; forward.disabled = sampleIndex === set.events.length - 1;
-    back.addEventListener('click', () => { sampleIndex--; showSample(); });
-    forward.addEventListener('click', () => { sampleIndex++; showSample(); });
+    function navigate(delta) {
+      sampleIndex += delta; showSample();
+      const heading = samplePanel.querySelector('.sample-heading');
+      if (heading) { heading.focus({preventScroll: true}); heading.scrollIntoView({block: 'start'}); }
+    }
+    back.addEventListener('click', () => navigate(-1));
+    forward.addEventListener('click', () => navigate(1));
     download.addEventListener('click', () => exportSample(id, set));
     nav.append(back, forward, download); panel.append(nav); samplePanel.append(panel);
   } catch (err) { sampleError.textContent = 'Could not open the saved set: ' + err.message; }
