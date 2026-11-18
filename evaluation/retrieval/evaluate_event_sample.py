@@ -23,7 +23,7 @@ def load_cases(path):
     return rows
 
 
-def evaluate(rows, results=None, pool=None):
+def evaluate(rows, results=None, pool=None, include_proposed=False):
     """Calculate event-level top-10 hits against independently recorded labels.
 
     Missing labels and targets outside the candidate pool are reported separately.
@@ -48,7 +48,10 @@ def evaluate(rows, results=None, pool=None):
         ranked = [x['candidate_uid'] for x in suggestions[:10]]
         example = {'kalshi_uid': uid, 'outcome': row['outcome']}
         for judgment, metric in metrics.items():
-            targets = {x['event_uid'] for x in row['related_events'] if x.get('judgment') == judgment and x.get('event_uid')}
+            accepted = {judgment}
+            if include_proposed and judgment == 'likely_exact':
+                accepted.add('proposed_likely_exact')
+            targets = {x['event_uid'] for x in row['related_events'] if x.get('judgment') in accepted and x.get('event_uid')}
             if not targets:
                 continue
             metric['events_with_labels'] += 1
@@ -72,6 +75,8 @@ def evaluate(rows, results=None, pool=None):
         metric['event_hit_rate_at_10'] = metric['events_with_any_target_in_top_10'] / denominator if denominator else None
         metric['event_hit_rate_at_5'] = metric['events_with_any_target_in_top_5'] / denominator if denominator else None
     return {'set_id': rows[0]['set_id'], 'events': len(rows), 'outcomes': dict(outcomes),
+            'proposed_labels_included': include_proposed,
+            'case_origins': dict(Counter(row.get('case_origin', 'unspecified') for row in rows)),
             'source': 'exported baseline suggestions' if results is None else 'retrieval run',
             'candidate_pool_verified': pool is not None, 'metrics': metrics, 'examples': examples,
             'note': 'Conditional event-level hit rates use reviewed targets in the candidate pool. Labels are incomplete and originally came from baseline suggestions; review additional candidates before interpreting model comparisons.'}
@@ -94,10 +99,13 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('reviews', help='Evaluation-set CSV exported from the browser')
     parser.add_argument('--results', help='Retrieval JSON for another run; omit to summarize the saved baseline')
+    parser.add_argument('--include-proposed', action='store_true', help='Include proposed likely-exact pairs that have not yet been reviewed by the user')
     args = parser.parse_args()
     rows = load_cases(args.reviews)
     results, pool, metadata = load_results(args.results, {r['kalshi_uid'] for r in rows}) if args.results else (None, None, None)
-    report = evaluate(rows, results, pool)
+    report = evaluate(rows, results, pool, args.include_proposed)
+    if args.include_proposed and pool is None:
+        parser.error('--include-proposed requires --results so candidate-pool exclusions are not mistaken for ranking failures')
     if metadata:
         report['run'] = {k: metadata.get(k) for k in ('model', 'resolved_revision', 'representation', 'mapping_sha256', 'top_only')}
     print(json.dumps(report, indent=2))

@@ -1,0 +1,457 @@
+{
+  "set_id": "combined-ec4f0a97-4108-42e0-95bd-96e5db26ba1a",
+  "events": 25,
+  "outcomes": {
+    "found_top10": 17,
+    "not_on_platform": 3,
+    "in_collection_not_top10": 5
+  },
+  "proposed_labels_included": true,
+  "case_origins": {
+    "user_random_sample": 20,
+    "assistant_handpicked": 5
+  },
+  "source": "retrieval run",
+  "candidate_pool_verified": true,
+  "metrics": {
+    "likely_exact": {
+      "events_with_labels": 20,
+      "events_with_targets_in_pool": 15,
+      "events_with_all_targets_in_pool": 15,
+      "events_with_targets_outside_pool": 5,
+      "events_with_any_target_in_top_10": 15,
+      "events_with_any_target_in_top_5": 15,
+      "event_hit_rate_at_10": 1.0,
+      "event_hit_rate_at_5": 1.0
+    },
+    "possible": {
+      "events_with_labels": 11,
+      "events_with_targets_in_pool": 11,
+      "events_with_all_targets_in_pool": 11,
+      "events_with_targets_outside_pool": 0,
+      "events_with_any_target_in_top_10": 11,
+      "events_with_any_target_in_top_5": 9,
+      "event_hit_rate_at_10": 1.0,
+      "event_hit_rate_at_5": 0.8181818181818182
+    }
+  },
+  "examples": [
+    {
+      "kalshi_uid": "KALSHI:KXMIDTERMMOV-FLSENR",
+      "outcome": "found_top10",
+      "likely_exact": {
+        "known_ids": [
+          "POLYUS:86692"
+        ],
+        "outside_pool": [],
+        "top_10_ids": [
+          "POLYUS:86692"
+        ]
+      }
+    },
+    {
+      "kalshi_uid": "KALSHI:KXPRESNOMD-28",
+      "outcome": "found_top10",
+      "likely_exact": {
+        "known_ids": [
+          "POLYUS:81102"
+        ],
+        "outside_pool": [],
+        "top_10_ids": [
+          "POLYUS:81102"
+        ]
+      },
+      "possible": {
+        "known_ids": [
+          "POLYUS:81089",
+          "POLYUS:81090"
+        ],
+        "outside_pool": [],
+        "top_10_ids": [
+          "POLYUS:81090",
+          "POLYUS:81089"
+        ]
+      }
+    },
+    {
+      "kalshi_uid": "KALSHI:KXHOUSERACE-NC03-26",
+      "outcome": "found_top10",
+      "likely_exact": {
+        "known_ids": [
+          "POLYUS:78802"
+        ],
+        "outside_pool": [],
+        "top_10_ids": [
+          "POLYUS:78802"
+        ]
+      },
+      "possible": {
+        "known_ids": [
+          "POLYUS:93473"
+        ],
+        "outside_pool": [],
+        "top_10_ids": [
+          "POLYUS:93473"
+        ]
+      }
+    },
+    {
+      "kalshi_uid": "KALSHI:KXSAVEACT-27",
+      "outcome": "found_top10",
+      "likely_exact": {
+        "known_ids": [
+          "POLYUS:44784"
+        ],
+        "outside_pool": [],
+        "top_10_ids": [
+          "POLYUS:44784"
+        ]
+      }
+    },
+    {
+      "kalshi_uid": "KALSHI:KXPOLIO-26",
+      "outcome": "not_on_platform"
+    },
+    {
+      "kalshi_uid": "KALSHI:KXAKSENATE-26NOV03",
+      "outcome": "found_top10",
+      "likely_exact": {
+        "known_ids": [
+          "POLYUS:15710"
+        ],
+        "outside_pool": [],
+        "top_10_ids": [
+          "POLYUS:15710"
+        ]
+      }
+    },
+    {
+      "kalshi_uid": "KALSHI:KXFEDDECISION-26DEC",
+      "outcome": "found_top10",
+      "likely_exact": {
+        "known_ids": [
+          "POLYUS:122355"
+        ],
+        "outside_pool": [],
+        "top_10_ids": [
+          "POLYUS:122355"
+        ]
+      },
+      "possible": {
+        "known_ids": [
+          "POLYUS:110012",
+          "POLYUS:110130",
+          "POLYUS:122352",
+          "POLYUS:124545",
+          "POLYUS:44782"
+        ],
+        "outside_pool": [],
+        "top_10_ids": [
+          "POLYUS:44782",
+          "POLYUS:122352",
+          "POLYUS:110012",
+          "POLYUS:124545",
+          "POLYUS:110130"
+        ]
+      }
+    },
+    {
+      "kalshi_uid": "KALSHI:KXRATECUTCOUNT-26DEC31",
+      "outcome": "found_top10",
+      "possible": {
+        "known_ids": [
+          "POLYUS:110012",
+          "POLYUS:110130",
+          "POLYUS:122352",
+          "POLYUS:44782"
+        ],
+        "outside_pool": [],
+        "top_10_ids": [
+          "POLYUS:44782",
+          "POLYUS:122352",
+          "POLYUS:110012",
+          "POLYUS:110130"
+        ]
+      }
+    },
+    {
+      "kalshi_uid": "KALSHI:KXMIDTERMMOV-FL01R",
+      "outcome": "found_top10",
+      "likely_exact": {
+        "known_ids": [
+          "POLYUS:93301"
+        ],
+        "outside_pool": [],
+        "top_10_ids": [
+          "POLYUS:93301"
+        ]
+      }
+    },
+    {
+      "kalshi_uid": "KALSHI:KXISRAELPM-26OCT27",
+      "outcome": "found_top10",
+      "likely_exact": {
+        "known_ids": [
+          "POLYUS:47848"
+        ],
+        "outside_pool": [],
+        "top_10_ids": [
+          "POLYUS:47848"
+        ]
+      },
+      "possible": {
+        "known_ids": [
+          "POLYUS:110134",
+          "POLYUS:151217"
+        ],
+        "outside_pool": [],
+        "top_10_ids": [
+          "POLYUS:151217",
+          "POLYUS:110134"
+        ]
+      }
+    },
+    {
+      "kalshi_uid": "KALSHI:KXLLM1-26DEC31",
+      "outcome": "found_top10",
+      "likely_exact": {
+        "known_ids": [
+          "POLYUS:44404"
+        ],
+        "outside_pool": [],
+        "top_10_ids": [
+          "POLYUS:44404"
+        ]
+      },
+      "possible": {
+        "known_ids": [
+          "POLYUS:51412",
+          "POLYUS:53725"
+        ],
+        "outside_pool": [],
+        "top_10_ids": [
+          "POLYUS:51412",
+          "POLYUS:53725"
+        ]
+      }
+    },
+    {
+      "kalshi_uid": "KALSHI:KXPRESPERSON-28",
+      "outcome": "found_top10",
+      "likely_exact": {
+        "known_ids": [
+          "POLYUS:81090"
+        ],
+        "outside_pool": [],
+        "top_10_ids": [
+          "POLYUS:81090"
+        ]
+      },
+      "possible": {
+        "known_ids": [
+          "POLYUS:223506",
+          "POLYUS:81089"
+        ],
+        "outside_pool": [],
+        "top_10_ids": [
+          "POLYUS:81089",
+          "POLYUS:223506"
+        ]
+      }
+    },
+    {
+      "kalshi_uid": "KALSHI:GTA6",
+      "outcome": "found_top10",
+      "likely_exact": {
+        "known_ids": [
+          "POLYUS:17700"
+        ],
+        "outside_pool": [],
+        "top_10_ids": [
+          "POLYUS:17700"
+        ]
+      }
+    },
+    {
+      "kalshi_uid": "KALSHI:KXNASDAQ100Y-26DEC31H1600",
+      "outcome": "not_on_platform"
+    },
+    {
+      "kalshi_uid": "KALSHI:KXSPACEXCOUNT-26B",
+      "outcome": "not_on_platform"
+    },
+    {
+      "kalshi_uid": "KALSHI:KXPRESNOMR-28",
+      "outcome": "found_top10",
+      "likely_exact": {
+        "known_ids": [
+          "POLYUS:81103"
+        ],
+        "outside_pool": [],
+        "top_10_ids": [
+          "POLYUS:81103"
+        ]
+      },
+      "possible": {
+        "known_ids": [
+          "POLYUS:223506",
+          "POLYUS:81089"
+        ],
+        "outside_pool": [],
+        "top_10_ids": [
+          "POLYUS:223506",
+          "POLYUS:81089"
+        ]
+      }
+    },
+    {
+      "kalshi_uid": "KALSHI:KXHOUSERACE-WA05-26",
+      "outcome": "found_top10",
+      "likely_exact": {
+        "known_ids": [
+          "POLYUS:81380"
+        ],
+        "outside_pool": [],
+        "top_10_ids": [
+          "POLYUS:81380"
+        ]
+      },
+      "possible": {
+        "known_ids": [
+          "POLYUS:101606"
+        ],
+        "outside_pool": [],
+        "top_10_ids": [
+          "POLYUS:101606"
+        ]
+      }
+    },
+    {
+      "kalshi_uid": "KALSHI:SENATEAK-26",
+      "outcome": "found_top10",
+      "likely_exact": {
+        "known_ids": [
+          "POLYUS:15710"
+        ],
+        "outside_pool": [],
+        "top_10_ids": [
+          "POLYUS:15710"
+        ]
+      }
+    },
+    {
+      "kalshi_uid": "KALSHI:KXBTC2026200-27JAN01",
+      "outcome": "found_top10",
+      "possible": {
+        "known_ids": [
+          "POLYUS:47983",
+          "POLYUS:58438",
+          "POLYUS:58549"
+        ],
+        "outside_pool": [],
+        "top_10_ids": [
+          "POLYUS:58549",
+          "POLYUS:58438",
+          "POLYUS:47983"
+        ]
+      }
+    },
+    {
+      "kalshi_uid": "KALSHI:KXHEGSETHOUT-26APR",
+      "outcome": "found_top10",
+      "likely_exact": {
+        "known_ids": [
+          "POLYUS:44388"
+        ],
+        "outside_pool": [],
+        "top_10_ids": [
+          "POLYUS:44388"
+        ]
+      },
+      "possible": {
+        "known_ids": [
+          "POLYUS:110133",
+          "POLYUS:44391"
+        ],
+        "outside_pool": [],
+        "top_10_ids": [
+          "POLYUS:110133",
+          "POLYUS:44391"
+        ]
+      }
+    },
+    {
+      "kalshi_uid": "KALSHI:KXCPICOREYOY-26NOV",
+      "outcome": "in_collection_not_top10",
+      "likely_exact": {
+        "known_ids": [
+          "POLYUS:258047"
+        ],
+        "outside_pool": [
+          "POLYUS:258047"
+        ],
+        "top_10_ids": []
+      }
+    },
+    {
+      "kalshi_uid": "KALSHI:KXGGWINNER-DIR27",
+      "outcome": "in_collection_not_top10",
+      "likely_exact": {
+        "known_ids": [
+          "POLYUS:250381"
+        ],
+        "outside_pool": [
+          "POLYUS:250381"
+        ],
+        "top_10_ids": []
+      }
+    },
+    {
+      "kalshi_uid": "KALSHI:KXMAYORCHI-27",
+      "outcome": "in_collection_not_top10",
+      "likely_exact": {
+        "known_ids": [
+          "POLYUS:266568"
+        ],
+        "outside_pool": [
+          "POLYUS:266568"
+        ],
+        "top_10_ids": []
+      }
+    },
+    {
+      "kalshi_uid": "KALSHI:KXHEGSETHIMPEACH-27JUL01",
+      "outcome": "in_collection_not_top10",
+      "likely_exact": {
+        "known_ids": [
+          "POLYUS:254385"
+        ],
+        "outside_pool": [
+          "POLYUS:254385"
+        ],
+        "top_10_ids": []
+      }
+    },
+    {
+      "kalshi_uid": "KALSHI:KXRT-FOC",
+      "outcome": "in_collection_not_top10",
+      "likely_exact": {
+        "known_ids": [
+          "POLYUS:238960"
+        ],
+        "outside_pool": [
+          "POLYUS:238960"
+        ],
+        "top_10_ids": []
+      }
+    }
+  ],
+  "note": "Conditional event-level hit rates use reviewed targets in the candidate pool. Labels are incomplete and originally came from baseline suggestions; review additional candidates before interpreting model comparisons.",
+  "run": {
+    "model": "google/embeddinggemma-300m",
+    "resolved_revision": "57c266a740f537b4dc058e1b0cda161fd15afa75",
+    "representation": "title",
+    "mapping_sha256": "a03bead4a17c040b4eb99f47877c5dbc4c9b1eeefdb0b9e2662a81717817ef07",
+    "top_only": true
+  }
+}

@@ -113,3 +113,22 @@ python -m evaluation.retrieval.evaluate_event_sample path/to/evaluation.csv --re
 ```
 
 Run retrieval with `--query-id` for each of the sampled event IDs and `--top-k 10` or more. Keep the profile snapshot, candidate pool, category mappings, and representation fixed across models. The evaluator reports the saved run configuration and excludes events whose labeled targets are outside that run's candidate pool from that target-type hit-rate denominator; check pool sizes, membership and mappings independently. It reports likely-exact and possible judgments separately and counts at most one hit per Kalshi event per judgment type. Events with no reviewed labels of a given type do not enter its denominator. The labels came from the original model's suggestions, so these results are an exploratory comparison, not unbiased recall: review the other model's unique suggestions before drawing conclusions. Event-review CSVs do not yet record a match category for an event marked as in the collection but missed, so those cases are not treated as likely-exact or possible positives automatically.
+
+The combined working set is `evaluation/retrieval/combined_event_evaluation.csv`: it contains the 20 user-reviewed random events plus five handpicked, proposed pairs. The five have `review_status=needs_user_review` and `proposed_likely_exact` judgments; they were outside the original candidate pool. They are excluded from likely-exact metrics unless explicitly requested. To evaluate the original run while including these proposals and reporting the pool exclusions:
+
+```sh
+python -m evaluation.retrieval.evaluate_event_sample evaluation/retrieval/combined_event_evaluation.csv \
+  --results data/embeddings/full-candidates.json --include-proposed
+```
+
+`--include-proposed` requires a results file so out-of-pool cases aren't miscounted as ranking failures. This combined set is for development, not a representative random sample: its five additional cases were handpicked. Re-run models using a common profile snapshot, candidate pool and filters before comparing them. Labels remain incomplete and the five proposals still need human review.
+
+### Expanded-pool rerun of the 25 cases
+
+`evaluation/retrieval/run_expanded_sample.py` evaluates the combined cases using the pinned original model and title representation against every Polymarket US event in a frozen open-market profile snapshot. It records both unfiltered ranks and ranks using the current category/sports filters, plus every top-10 result and labeled target's rank. The saved snapshot is `data/embeddings/evaluation-profile-snapshot.parquet` (local and Git-ignored); its SHA-256 is recorded in the JSON result. To repeat this exact local run:
+
+```sh
+HF_HUB_OFFLINE=1 python -m evaluation.retrieval.run_expanded_sample
+```
+
+The human-readable summary is `evaluation/retrieval/expanded_sample_summary.md`, and the full scores and ranks are in `evaluation/retrieval/expanded_sample_results.json`. This separate evaluation does not regenerate the browser's original comparison database. The current category mapping differs from the original full run; compare unfiltered results or freeze the same mapping and profile snapshot when comparing models. Proposed labels need review, and three no-platform cases have no known counterpart to rank.

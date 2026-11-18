@@ -1,0 +1,3272 @@
+{
+  "model": "google/embeddinggemma-300m",
+  "revision": "57c266a740f537b4dc058e1b0cda161fd15afa75",
+  "representation": "title",
+  "profile_path": "data/embeddings/evaluation-profile-snapshot.parquet",
+  "profile_sha256": "016a069dbf7c42b2f5c8f6e463a567f92adc77606c948211c36ad4d6d54c6114",
+  "mapping_sha256": "f510077ccb9e1e8646fddffa3a44772390862c1f866d5d049af9ec430bc11321",
+  "query_count": 25,
+  "candidate_count": 8779,
+  "profile_issues": {
+    "conflicting_subcategory": 44
+  },
+  "metrics": {
+    "likely_exact": {
+      "events_with_labels": 15,
+      "events_in_pool": 15,
+      "top_10_all": 15,
+      "top_10_filtered": 15
+    },
+    "proposed_likely_exact": {
+      "events_with_labels": 5,
+      "events_in_pool": 5,
+      "top_10_all": 5,
+      "top_10_filtered": 5
+    },
+    "possible": {
+      "events_with_labels": 11,
+      "events_in_pool": 11,
+      "top_10_all": 11,
+      "top_10_filtered": 11
+    }
+  },
+  "events": [
+    {
+      "event_uid": "KALSHI:KXMIDTERMMOV-FLSENR",
+      "title": "Florida Senate margin of victory",
+      "origin": "user_random_sample",
+      "review_status": "user_labeled",
+      "outcome": "found_top10",
+      "targets": [
+        {
+          "event_uid": "POLYUS:86692",
+          "title": "Florida Senate Election Margin of Victory",
+          "judgment": "likely_exact",
+          "score": 0.6701520085334778,
+          "rank_all": 1,
+          "rank_filtered": 1,
+          "in_pool": true
+        }
+      ],
+      "top_10_all": [
+        {
+          "event_uid": "POLYUS:86692",
+          "title": "Florida Senate Election Margin of Victory",
+          "score": 0.6701520085334778
+        },
+        {
+          "event_uid": "POLYUS:86539",
+          "title": "Florida Senate Election: Turnout",
+          "score": 0.5686457753181458
+        },
+        {
+          "event_uid": "POLYUS:86870",
+          "title": "Florida Governor Election Margin of Victory",
+          "score": 0.5465908646583557
+        },
+        {
+          "event_uid": "POLYUS:93307",
+          "title": "FL-07 House Election Margin of Victory",
+          "score": 0.527637779712677
+        },
+        {
+          "event_uid": "POLYUS:93314",
+          "title": "FL-21 House Election Margin of Victory",
+          "score": 0.525981068611145
+        },
+        {
+          "event_uid": "POLYUS:93301",
+          "title": "FL-01 House Election Margin of Victory",
+          "score": 0.5249656438827515
+        },
+        {
+          "event_uid": "POLYUS:93318",
+          "title": "FL-20 House Election Margin of Victory",
+          "score": 0.523105263710022
+        },
+        {
+          "event_uid": "POLYUS:93309",
+          "title": "FL-17 House Election Margin of Victory",
+          "score": 0.5217796564102173
+        },
+        {
+          "event_uid": "POLYUS:101260",
+          "title": "FL-09 House Election Margin of Victory",
+          "score": 0.5216635465621948
+        },
+        {
+          "event_uid": "POLYUS:93316",
+          "title": "FL-19 House Election Margin of Victory",
+          "score": 0.520198404788971
+        }
+      ],
+      "top_10_filtered": [
+        {
+          "event_uid": "POLYUS:86692",
+          "title": "Florida Senate Election Margin of Victory",
+          "score": 0.6701520085334778
+        },
+        {
+          "event_uid": "POLYUS:86539",
+          "title": "Florida Senate Election: Turnout",
+          "score": 0.5686457753181458
+        },
+        {
+          "event_uid": "POLYUS:86870",
+          "title": "Florida Governor Election Margin of Victory",
+          "score": 0.5465908646583557
+        },
+        {
+          "event_uid": "POLYUS:93307",
+          "title": "FL-07 House Election Margin of Victory",
+          "score": 0.527637779712677
+        },
+        {
+          "event_uid": "POLYUS:93314",
+          "title": "FL-21 House Election Margin of Victory",
+          "score": 0.525981068611145
+        },
+        {
+          "event_uid": "POLYUS:93301",
+          "title": "FL-01 House Election Margin of Victory",
+          "score": 0.5249656438827515
+        },
+        {
+          "event_uid": "POLYUS:93318",
+          "title": "FL-20 House Election Margin of Victory",
+          "score": 0.523105263710022
+        },
+        {
+          "event_uid": "POLYUS:93309",
+          "title": "FL-17 House Election Margin of Victory",
+          "score": 0.5217796564102173
+        },
+        {
+          "event_uid": "POLYUS:101260",
+          "title": "FL-09 House Election Margin of Victory",
+          "score": 0.5216635465621948
+        },
+        {
+          "event_uid": "POLYUS:93316",
+          "title": "FL-19 House Election Margin of Victory",
+          "score": 0.520198404788971
+        }
+      ]
+    },
+    {
+      "event_uid": "KALSHI:KXPRESNOMD-28",
+      "title": "2028 Democratic presidential nominee",
+      "origin": "user_random_sample",
+      "review_status": "user_labeled",
+      "outcome": "found_top10",
+      "targets": [
+        {
+          "event_uid": "POLYUS:81102",
+          "title": "2028 Democratic Presidential Nominee",
+          "judgment": "likely_exact",
+          "score": 0.6123164892196655,
+          "rank_all": 1,
+          "rank_filtered": 1,
+          "in_pool": true
+        },
+        {
+          "event_uid": "POLYUS:81090",
+          "title": "2028 US Presidential Election Winner",
+          "judgment": "possible",
+          "score": 0.413926362991333,
+          "rank_all": 7,
+          "rank_filtered": 7,
+          "in_pool": true
+        },
+        {
+          "event_uid": "POLYUS:81089",
+          "title": "2028 US Presidential Election Winner (Party)",
+          "judgment": "possible",
+          "score": 0.383223295211792,
+          "rank_all": 12,
+          "rank_filtered": 12,
+          "in_pool": true
+        }
+      ],
+      "top_10_all": [
+        {
+          "event_uid": "POLYUS:81102",
+          "title": "2028 Democratic Presidential Nominee",
+          "score": 0.6123164892196655
+        },
+        {
+          "event_uid": "POLYUS:204234",
+          "title": "2028 Democratic VP Nominee",
+          "score": 0.5710343718528748
+        },
+        {
+          "event_uid": "POLYUS:266577",
+          "title": "2028 South Carolina Democratic Presidential Primary Winner",
+          "score": 0.4814940094947815
+        },
+        {
+          "event_uid": "POLYUS:235691",
+          "title": "2028 Nevada Democratic Presidential Primary Winner",
+          "score": 0.47019127011299133
+        },
+        {
+          "event_uid": "POLYUS:81103",
+          "title": "2028 Republican Presidential Nominee",
+          "score": 0.4420238137245178
+        },
+        {
+          "event_uid": "POLYUS:204235",
+          "title": "2028 Republican VP Nominee",
+          "score": 0.4260292053222656
+        },
+        {
+          "event_uid": "POLYUS:81090",
+          "title": "2028 US Presidential Election Winner",
+          "score": 0.413926362991333
+        },
+        {
+          "event_uid": "POLYUS:281469",
+          "title": "2027 Minnesota Senate Democratic Nominee",
+          "score": 0.41252872347831726
+        },
+        {
+          "event_uid": "POLYUS:259066",
+          "title": "2028 Presidential Election: Delaware Winner",
+          "score": 0.4121285080909729
+        },
+        {
+          "event_uid": "POLYUS:223506",
+          "title": "Who Will Announce a Presidential Run Before 2028?",
+          "score": 0.4032946825027466
+        }
+      ],
+      "top_10_filtered": [
+        {
+          "event_uid": "POLYUS:81102",
+          "title": "2028 Democratic Presidential Nominee",
+          "score": 0.6123164892196655
+        },
+        {
+          "event_uid": "POLYUS:204234",
+          "title": "2028 Democratic VP Nominee",
+          "score": 0.5710343718528748
+        },
+        {
+          "event_uid": "POLYUS:266577",
+          "title": "2028 South Carolina Democratic Presidential Primary Winner",
+          "score": 0.4814940094947815
+        },
+        {
+          "event_uid": "POLYUS:235691",
+          "title": "2028 Nevada Democratic Presidential Primary Winner",
+          "score": 0.47019127011299133
+        },
+        {
+          "event_uid": "POLYUS:81103",
+          "title": "2028 Republican Presidential Nominee",
+          "score": 0.4420238137245178
+        },
+        {
+          "event_uid": "POLYUS:204235",
+          "title": "2028 Republican VP Nominee",
+          "score": 0.4260292053222656
+        },
+        {
+          "event_uid": "POLYUS:81090",
+          "title": "2028 US Presidential Election Winner",
+          "score": 0.413926362991333
+        },
+        {
+          "event_uid": "POLYUS:281469",
+          "title": "2027 Minnesota Senate Democratic Nominee",
+          "score": 0.41252872347831726
+        },
+        {
+          "event_uid": "POLYUS:259066",
+          "title": "2028 Presidential Election: Delaware Winner",
+          "score": 0.4121285080909729
+        },
+        {
+          "event_uid": "POLYUS:223506",
+          "title": "Who Will Announce a Presidential Run Before 2028?",
+          "score": 0.4032946825027466
+        }
+      ]
+    },
+    {
+      "event_uid": "KALSHI:KXHOUSERACE-NC03-26",
+      "title": "NC-03 House winner?",
+      "origin": "user_random_sample",
+      "review_status": "user_labeled",
+      "outcome": "found_top10",
+      "targets": [
+        {
+          "event_uid": "POLYUS:78802",
+          "title": "NC-03 House Election Winner",
+          "judgment": "likely_exact",
+          "score": 0.6997057199478149,
+          "rank_all": 1,
+          "rank_filtered": 1,
+          "in_pool": true
+        },
+        {
+          "event_uid": "POLYUS:93473",
+          "title": "NC-03 House Election Margin of Victory",
+          "judgment": "possible",
+          "score": 0.6506325006484985,
+          "rank_all": 2,
+          "rank_filtered": 2,
+          "in_pool": true
+        }
+      ],
+      "top_10_all": [
+        {
+          "event_uid": "POLYUS:78802",
+          "title": "NC-03 House Election Winner",
+          "score": 0.6997057199478149
+        },
+        {
+          "event_uid": "POLYUS:93473",
+          "title": "NC-03 House Election Margin of Victory",
+          "score": 0.6506325006484985
+        },
+        {
+          "event_uid": "POLYUS:78806",
+          "title": "NC-07 House Election Winner",
+          "score": 0.5721655488014221
+        },
+        {
+          "event_uid": "POLYUS:78804",
+          "title": "NC-05 House Election Winner",
+          "score": 0.5701320171356201
+        },
+        {
+          "event_uid": "POLYUS:78807",
+          "title": "NC-08 House Election Winner",
+          "score": 0.5537037253379822
+        },
+        {
+          "event_uid": "POLYUS:79047",
+          "title": "CO-03 House Election Winner",
+          "score": 0.551421046257019
+        },
+        {
+          "event_uid": "POLYUS:78809",
+          "title": "NC-10 House Election Winner",
+          "score": 0.5447962284088135
+        },
+        {
+          "event_uid": "POLYUS:93474",
+          "title": "NC-02 House Election Margin of Victory",
+          "score": 0.5401163101196289
+        },
+        {
+          "event_uid": "POLYUS:93495",
+          "title": "NC-06 House Election Margin of Victory",
+          "score": 0.5389409065246582
+        },
+        {
+          "event_uid": "POLYUS:93505",
+          "title": "NC-09 House Election Margin of Victory",
+          "score": 0.5362937450408936
+        }
+      ],
+      "top_10_filtered": [
+        {
+          "event_uid": "POLYUS:78802",
+          "title": "NC-03 House Election Winner",
+          "score": 0.6997057199478149
+        },
+        {
+          "event_uid": "POLYUS:93473",
+          "title": "NC-03 House Election Margin of Victory",
+          "score": 0.6506325006484985
+        },
+        {
+          "event_uid": "POLYUS:78806",
+          "title": "NC-07 House Election Winner",
+          "score": 0.5721655488014221
+        },
+        {
+          "event_uid": "POLYUS:78804",
+          "title": "NC-05 House Election Winner",
+          "score": 0.5701320171356201
+        },
+        {
+          "event_uid": "POLYUS:78807",
+          "title": "NC-08 House Election Winner",
+          "score": 0.5537037253379822
+        },
+        {
+          "event_uid": "POLYUS:79047",
+          "title": "CO-03 House Election Winner",
+          "score": 0.551421046257019
+        },
+        {
+          "event_uid": "POLYUS:78809",
+          "title": "NC-10 House Election Winner",
+          "score": 0.5447962284088135
+        },
+        {
+          "event_uid": "POLYUS:93474",
+          "title": "NC-02 House Election Margin of Victory",
+          "score": 0.5401163101196289
+        },
+        {
+          "event_uid": "POLYUS:93495",
+          "title": "NC-06 House Election Margin of Victory",
+          "score": 0.5389409065246582
+        },
+        {
+          "event_uid": "POLYUS:93505",
+          "title": "NC-09 House Election Margin of Victory",
+          "score": 0.5362937450408936
+        }
+      ]
+    },
+    {
+      "event_uid": "KALSHI:KXSAVEACT-27",
+      "title": "Will the SAVE Act become law?",
+      "origin": "user_random_sample",
+      "review_status": "user_labeled",
+      "outcome": "found_top10",
+      "targets": [
+        {
+          "event_uid": "POLYUS:44784",
+          "title": "Save Act Becomes Law?",
+          "judgment": "likely_exact",
+          "score": 0.6533447504043579,
+          "rank_all": 1,
+          "rank_filtered": 1,
+          "in_pool": true
+        }
+      ],
+      "top_10_all": [
+        {
+          "event_uid": "POLYUS:44784",
+          "title": "Save Act Becomes Law?",
+          "score": 0.6533447504043579
+        },
+        {
+          "event_uid": "POLYUS:115562",
+          "title": "US Enacts AI Safety Bill?",
+          "score": 0.32085171341896057
+        },
+        {
+          "event_uid": "POLYUS:151839",
+          "title": "Will SNAP Participation Reach 40M Before 2028?",
+          "score": 0.25651639699935913
+        },
+        {
+          "event_uid": "POLYUS:59388",
+          "title": "Crypto Market Structure Legislation Becomes Law?",
+          "score": 0.2326677441596985
+        },
+        {
+          "event_uid": "POLYUS:115199",
+          "title": "Closest Senate Race?",
+          "score": 0.2312963604927063
+        },
+        {
+          "event_uid": "POLYUS:116503",
+          "title": "Washington Millionaires Tax Repeal Referendum",
+          "score": 0.2200746387243271
+        },
+        {
+          "event_uid": "POLYUS:127435",
+          "title": "Any State Enacts a Data Center Moratorium?",
+          "score": 0.21413947641849518
+        },
+        {
+          "event_uid": "POLYUS:227994",
+          "title": "Indiana Enacts a Data Center Moratorium?",
+          "score": 0.21210017800331116
+        },
+        {
+          "event_uid": "POLYUS:227989",
+          "title": "Ohio Enacts a Data Center Moratorium?",
+          "score": 0.2056255340576172
+        },
+        {
+          "event_uid": "POLYUS:122355",
+          "title": "Fed Decision in December",
+          "score": 0.2049711048603058
+        }
+      ],
+      "top_10_filtered": [
+        {
+          "event_uid": "POLYUS:44784",
+          "title": "Save Act Becomes Law?",
+          "score": 0.6533447504043579
+        },
+        {
+          "event_uid": "POLYUS:115562",
+          "title": "US Enacts AI Safety Bill?",
+          "score": 0.32085171341896057
+        },
+        {
+          "event_uid": "POLYUS:151839",
+          "title": "Will SNAP Participation Reach 40M Before 2028?",
+          "score": 0.25651639699935913
+        },
+        {
+          "event_uid": "POLYUS:59388",
+          "title": "Crypto Market Structure Legislation Becomes Law?",
+          "score": 0.2326677441596985
+        },
+        {
+          "event_uid": "POLYUS:115199",
+          "title": "Closest Senate Race?",
+          "score": 0.2312963604927063
+        },
+        {
+          "event_uid": "POLYUS:116503",
+          "title": "Washington Millionaires Tax Repeal Referendum",
+          "score": 0.2200746387243271
+        },
+        {
+          "event_uid": "POLYUS:127435",
+          "title": "Any State Enacts a Data Center Moratorium?",
+          "score": 0.21413947641849518
+        },
+        {
+          "event_uid": "POLYUS:227994",
+          "title": "Indiana Enacts a Data Center Moratorium?",
+          "score": 0.21210017800331116
+        },
+        {
+          "event_uid": "POLYUS:227989",
+          "title": "Ohio Enacts a Data Center Moratorium?",
+          "score": 0.2056255340576172
+        },
+        {
+          "event_uid": "POLYUS:122355",
+          "title": "Fed Decision in December",
+          "score": 0.2049711048603058
+        }
+      ]
+    },
+    {
+      "event_uid": "KALSHI:KXPOLIO-26",
+      "title": "Will there be a case of polio in the USA this year?",
+      "origin": "user_random_sample",
+      "review_status": "user_labeled",
+      "outcome": "not_on_platform",
+      "targets": [],
+      "top_10_all": [
+        {
+          "event_uid": "POLYUS:60950",
+          "title": "US Measles Cases in 2026?",
+          "score": 0.4701498746871948
+        },
+        {
+          "event_uid": "POLYUS:127433",
+          "title": "Any State Enacts Vaccine Mandate Ban?",
+          "score": 0.31527552008628845
+        },
+        {
+          "event_uid": "POLYUS:60952",
+          "title": "Will There Be a Pandemic?",
+          "score": 0.30133241415023804
+        },
+        {
+          "event_uid": "POLYUS:148033",
+          "title": "#1 Searched Passing on Google in the US 2026?",
+          "score": 0.2707361578941345
+        },
+        {
+          "event_uid": "POLYUS:147984",
+          "title": "Plague Pandemic?",
+          "score": 0.2638353109359741
+        },
+        {
+          "event_uid": "POLYUS:148035",
+          "title": "#1 Searched Person on Google in the US 2026?",
+          "score": 0.2596314251422882
+        },
+        {
+          "event_uid": "POLYUS:151853",
+          "title": "US Birth Rate in 2026? (Per 1000 Women)",
+          "score": 0.2596200108528137
+        },
+        {
+          "event_uid": "POLYUS:199613",
+          "title": "How high will gas prices in Texas get this year?",
+          "score": 0.25841832160949707
+        },
+        {
+          "event_uid": "POLYUS:157550",
+          "title": "US Net Migration in 2026?",
+          "score": 0.24987822771072388
+        },
+        {
+          "event_uid": "POLYUS:199612",
+          "title": "How high will gas prices in California get this year?",
+          "score": 0.24785616993904114
+        }
+      ],
+      "top_10_filtered": [
+        {
+          "event_uid": "POLYUS:60950",
+          "title": "US Measles Cases in 2026?",
+          "score": 0.4701498746871948
+        },
+        {
+          "event_uid": "POLYUS:127433",
+          "title": "Any State Enacts Vaccine Mandate Ban?",
+          "score": 0.31527552008628845
+        },
+        {
+          "event_uid": "POLYUS:60952",
+          "title": "Will There Be a Pandemic?",
+          "score": 0.30133241415023804
+        },
+        {
+          "event_uid": "POLYUS:147984",
+          "title": "Plague Pandemic?",
+          "score": 0.2638353109359741
+        },
+        {
+          "event_uid": "POLYUS:151853",
+          "title": "US Birth Rate in 2026? (Per 1000 Women)",
+          "score": 0.2596200108528137
+        },
+        {
+          "event_uid": "POLYUS:60956",
+          "title": "Who will be arrested in 2026?",
+          "score": 0.24085111916065216
+        },
+        {
+          "event_uid": "POLYUS:115562",
+          "title": "US Enacts AI Safety Bill?",
+          "score": 0.21873408555984497
+        },
+        {
+          "event_uid": "POLYUS:127435",
+          "title": "Any State Enacts a Data Center Moratorium?",
+          "score": 0.2183699756860733
+        },
+        {
+          "event_uid": "POLYUS:44781",
+          "title": "Who Will Announce a Presidential Run in 2026?",
+          "score": 0.21563473343849182
+        },
+        {
+          "event_uid": "POLYUS:223506",
+          "title": "Who Will Announce a Presidential Run Before 2028?",
+          "score": 0.21419990062713623
+        }
+      ]
+    },
+    {
+      "event_uid": "KALSHI:KXAKSENATE-26NOV03",
+      "title": "Alaska Senate winner? (Person)",
+      "origin": "user_random_sample",
+      "review_status": "user_labeled",
+      "outcome": "found_top10",
+      "targets": [
+        {
+          "event_uid": "POLYUS:15710",
+          "title": "Alaska Senate Election Winner",
+          "judgment": "likely_exact",
+          "score": 0.6517710089683533,
+          "rank_all": 1,
+          "rank_filtered": 1,
+          "in_pool": true
+        }
+      ],
+      "top_10_all": [
+        {
+          "event_uid": "POLYUS:15710",
+          "title": "Alaska Senate Election Winner",
+          "score": 0.6517710089683533
+        },
+        {
+          "event_uid": "POLYUS:80945",
+          "title": "Alaska Governor Election Winner",
+          "score": 0.5537413954734802
+        },
+        {
+          "event_uid": "POLYUS:86299",
+          "title": "Alaska Senate Election: Turnout",
+          "score": 0.542583703994751
+        },
+        {
+          "event_uid": "POLYUS:199738",
+          "title": "2028 Presidential Election: Alaska Winner",
+          "score": 0.4486631751060486
+        },
+        {
+          "event_uid": "POLYUS:132404",
+          "title": "Closer Senate Race: Texas or Alaska?",
+          "score": 0.4407193958759308
+        },
+        {
+          "event_uid": "POLYUS:116500",
+          "title": "Alaska Ranked Choice Voting Repeal Referendum",
+          "score": 0.43586617708206177
+        },
+        {
+          "event_uid": "POLYUS:87280",
+          "title": "AK-AL House Election Winner",
+          "score": 0.42512020468711853
+        },
+        {
+          "event_uid": "POLYUS:223698",
+          "title": "Senate Combo: Iowa, South Carolina, Alaska",
+          "score": 0.3985213041305542
+        },
+        {
+          "event_uid": "POLYUS:86537",
+          "title": "Alabama Senate Election Margin of Victory",
+          "score": 0.37743619084358215
+        },
+        {
+          "event_uid": "POLYUS:77105",
+          "title": "Mississippi Senate Election Winner",
+          "score": 0.36300307512283325
+        }
+      ],
+      "top_10_filtered": [
+        {
+          "event_uid": "POLYUS:15710",
+          "title": "Alaska Senate Election Winner",
+          "score": 0.6517710089683533
+        },
+        {
+          "event_uid": "POLYUS:80945",
+          "title": "Alaska Governor Election Winner",
+          "score": 0.5537413954734802
+        },
+        {
+          "event_uid": "POLYUS:86299",
+          "title": "Alaska Senate Election: Turnout",
+          "score": 0.542583703994751
+        },
+        {
+          "event_uid": "POLYUS:199738",
+          "title": "2028 Presidential Election: Alaska Winner",
+          "score": 0.4486631751060486
+        },
+        {
+          "event_uid": "POLYUS:132404",
+          "title": "Closer Senate Race: Texas or Alaska?",
+          "score": 0.4407193958759308
+        },
+        {
+          "event_uid": "POLYUS:116500",
+          "title": "Alaska Ranked Choice Voting Repeal Referendum",
+          "score": 0.43586617708206177
+        },
+        {
+          "event_uid": "POLYUS:87280",
+          "title": "AK-AL House Election Winner",
+          "score": 0.42512020468711853
+        },
+        {
+          "event_uid": "POLYUS:223698",
+          "title": "Senate Combo: Iowa, South Carolina, Alaska",
+          "score": 0.3985213041305542
+        },
+        {
+          "event_uid": "POLYUS:86537",
+          "title": "Alabama Senate Election Margin of Victory",
+          "score": 0.37743619084358215
+        },
+        {
+          "event_uid": "POLYUS:77105",
+          "title": "Mississippi Senate Election Winner",
+          "score": 0.36300307512283325
+        }
+      ]
+    },
+    {
+      "event_uid": "KALSHI:KXFEDDECISION-26DEC",
+      "title": "Fed decision in Dec 2026?",
+      "origin": "user_random_sample",
+      "review_status": "user_labeled",
+      "outcome": "found_top10",
+      "targets": [
+        {
+          "event_uid": "POLYUS:122355",
+          "title": "Fed Decision in December",
+          "judgment": "likely_exact",
+          "score": 0.6046221256256104,
+          "rank_all": 1,
+          "rank_filtered": 1,
+          "in_pool": true
+        },
+        {
+          "event_uid": "POLYUS:44782",
+          "title": "Fed Rate Cut in 2026?",
+          "judgment": "possible",
+          "score": 0.5552908778190613,
+          "rank_all": 2,
+          "rank_filtered": 2,
+          "in_pool": true
+        },
+        {
+          "event_uid": "POLYUS:122352",
+          "title": "Another Fed Rate Hike in 2026?",
+          "judgment": "possible",
+          "score": 0.5319026708602905,
+          "rank_all": 3,
+          "rank_filtered": 3,
+          "in_pool": true
+        },
+        {
+          "event_uid": "POLYUS:110012",
+          "title": "Fed Rate Cut Greater Than 25bps?",
+          "judgment": "possible",
+          "score": 0.44131243228912354,
+          "rank_all": 4,
+          "rank_filtered": 4,
+          "in_pool": true
+        },
+        {
+          "event_uid": "POLYUS:124545",
+          "title": "Which Central Banks Will Hike by Dec. 31?",
+          "judgment": "possible",
+          "score": 0.36769458651542664,
+          "rank_all": 17,
+          "rank_filtered": 11,
+          "in_pool": true
+        },
+        {
+          "event_uid": "POLYUS:110130",
+          "title": "Which Central Banks Will Cut by Dec. 31?",
+          "judgment": "possible",
+          "score": 0.360038161277771,
+          "rank_all": 19,
+          "rank_filtered": 13,
+          "in_pool": true
+        }
+      ],
+      "top_10_all": [
+        {
+          "event_uid": "POLYUS:122355",
+          "title": "Fed Decision in December",
+          "score": 0.6046221256256104
+        },
+        {
+          "event_uid": "POLYUS:44782",
+          "title": "Fed Rate Cut in 2026?",
+          "score": 0.5552908778190613
+        },
+        {
+          "event_uid": "POLYUS:122352",
+          "title": "Another Fed Rate Hike in 2026?",
+          "score": 0.5319026708602905
+        },
+        {
+          "event_uid": "POLYUS:110012",
+          "title": "Fed Rate Cut Greater Than 25bps?",
+          "score": 0.44131243228912354
+        },
+        {
+          "event_uid": "POLYUS:124116",
+          "title": "Fed Funds Rate at the End of 2027?",
+          "score": 0.43817633390426636
+        },
+        {
+          "event_uid": "POLYUS:133492",
+          "title": "Will a Mag7 Company Launch a USD Stablecoin by December 31, 2026?",
+          "score": 0.4296339750289917
+        },
+        {
+          "event_uid": "POLYUS:60956",
+          "title": "Who will be arrested in 2026?",
+          "score": 0.39119386672973633
+        },
+        {
+          "event_uid": "POLYUS:44391",
+          "title": "Who Will Be Announced Out of Their Trump Admin Role in 2026?",
+          "score": 0.3902274966239929
+        },
+        {
+          "event_uid": "POLYUS:211637",
+          "title": "Who will host SNL in December 2026?",
+          "score": 0.3896937370300293
+        },
+        {
+          "event_uid": "POLYUS:16734",
+          "title": "UFC Featherweight Champion on Dec 31, 2026",
+          "score": 0.3862724304199219
+        }
+      ],
+      "top_10_filtered": [
+        {
+          "event_uid": "POLYUS:122355",
+          "title": "Fed Decision in December",
+          "score": 0.6046221256256104
+        },
+        {
+          "event_uid": "POLYUS:44782",
+          "title": "Fed Rate Cut in 2026?",
+          "score": 0.5552908778190613
+        },
+        {
+          "event_uid": "POLYUS:122352",
+          "title": "Another Fed Rate Hike in 2026?",
+          "score": 0.5319026708602905
+        },
+        {
+          "event_uid": "POLYUS:110012",
+          "title": "Fed Rate Cut Greater Than 25bps?",
+          "score": 0.44131243228912354
+        },
+        {
+          "event_uid": "POLYUS:124116",
+          "title": "Fed Funds Rate at the End of 2027?",
+          "score": 0.43817633390426636
+        },
+        {
+          "event_uid": "POLYUS:60956",
+          "title": "Who will be arrested in 2026?",
+          "score": 0.39119386672973633
+        },
+        {
+          "event_uid": "POLYUS:44391",
+          "title": "Who Will Be Announced Out of Their Trump Admin Role in 2026?",
+          "score": 0.3902274966239929
+        },
+        {
+          "event_uid": "POLYUS:44781",
+          "title": "Who Will Announce a Presidential Run in 2026?",
+          "score": 0.3839603066444397
+        },
+        {
+          "event_uid": "POLYUS:110011",
+          "title": "US GDP Growth in 2026?",
+          "score": 0.38330984115600586
+        },
+        {
+          "event_uid": "POLYUS:47849",
+          "title": "What Will Be in a US-Iran Deal in 2026?",
+          "score": 0.3724079430103302
+        }
+      ]
+    },
+    {
+      "event_uid": "KALSHI:KXRATECUTCOUNT-26DEC31",
+      "title": "Number of rate cuts in 2026?",
+      "origin": "user_random_sample",
+      "review_status": "user_labeled",
+      "outcome": "found_top10",
+      "targets": [
+        {
+          "event_uid": "POLYUS:44782",
+          "title": "Fed Rate Cut in 2026?",
+          "judgment": "possible",
+          "score": 0.5704535245895386,
+          "rank_all": 1,
+          "rank_filtered": 1,
+          "in_pool": true
+        },
+        {
+          "event_uid": "POLYUS:122352",
+          "title": "Another Fed Rate Hike in 2026?",
+          "judgment": "possible",
+          "score": 0.4699779450893402,
+          "rank_all": 2,
+          "rank_filtered": 2,
+          "in_pool": true
+        },
+        {
+          "event_uid": "POLYUS:110012",
+          "title": "Fed Rate Cut Greater Than 25bps?",
+          "judgment": "possible",
+          "score": 0.44734546542167664,
+          "rank_all": 3,
+          "rank_filtered": 3,
+          "in_pool": true
+        },
+        {
+          "event_uid": "POLYUS:110130",
+          "title": "Which Central Banks Will Cut by Dec. 31?",
+          "judgment": "possible",
+          "score": 0.35448622703552246,
+          "rank_all": 6,
+          "rank_filtered": 5,
+          "in_pool": true
+        }
+      ],
+      "top_10_all": [
+        {
+          "event_uid": "POLYUS:44782",
+          "title": "Fed Rate Cut in 2026?",
+          "score": 0.5704535245895386
+        },
+        {
+          "event_uid": "POLYUS:122352",
+          "title": "Another Fed Rate Hike in 2026?",
+          "score": 0.4699779450893402
+        },
+        {
+          "event_uid": "POLYUS:110012",
+          "title": "Fed Rate Cut Greater Than 25bps?",
+          "score": 0.44734546542167664
+        },
+        {
+          "event_uid": "POLYUS:110011",
+          "title": "US GDP Growth in 2026?",
+          "score": 0.3627505600452423
+        },
+        {
+          "event_uid": "POLYUS:58438",
+          "title": "Bitcoin price at the end of 2026?",
+          "score": 0.3618199825286865
+        },
+        {
+          "event_uid": "POLYUS:110130",
+          "title": "Which Central Banks Will Cut by Dec. 31?",
+          "score": 0.35448622703552246
+        },
+        {
+          "event_uid": "POLYUS:124116",
+          "title": "Fed Funds Rate at the End of 2027?",
+          "score": 0.35300061106681824
+        },
+        {
+          "event_uid": "POLYUS:60956",
+          "title": "Who will be arrested in 2026?",
+          "score": 0.33461669087409973
+        },
+        {
+          "event_uid": "POLYUS:44391",
+          "title": "Who Will Be Announced Out of Their Trump Admin Role in 2026?",
+          "score": 0.3299424648284912
+        },
+        {
+          "event_uid": "POLYUS:47849",
+          "title": "What Will Be in a US-Iran Deal in 2026?",
+          "score": 0.328045129776001
+        }
+      ],
+      "top_10_filtered": [
+        {
+          "event_uid": "POLYUS:44782",
+          "title": "Fed Rate Cut in 2026?",
+          "score": 0.5704535245895386
+        },
+        {
+          "event_uid": "POLYUS:122352",
+          "title": "Another Fed Rate Hike in 2026?",
+          "score": 0.4699779450893402
+        },
+        {
+          "event_uid": "POLYUS:110012",
+          "title": "Fed Rate Cut Greater Than 25bps?",
+          "score": 0.44734546542167664
+        },
+        {
+          "event_uid": "POLYUS:110011",
+          "title": "US GDP Growth in 2026?",
+          "score": 0.3627505600452423
+        },
+        {
+          "event_uid": "POLYUS:110130",
+          "title": "Which Central Banks Will Cut by Dec. 31?",
+          "score": 0.35448622703552246
+        },
+        {
+          "event_uid": "POLYUS:124116",
+          "title": "Fed Funds Rate at the End of 2027?",
+          "score": 0.35300061106681824
+        },
+        {
+          "event_uid": "POLYUS:60956",
+          "title": "Who will be arrested in 2026?",
+          "score": 0.33461669087409973
+        },
+        {
+          "event_uid": "POLYUS:44391",
+          "title": "Who Will Be Announced Out of Their Trump Admin Role in 2026?",
+          "score": 0.3299424648284912
+        },
+        {
+          "event_uid": "POLYUS:47849",
+          "title": "What Will Be in a US-Iran Deal in 2026?",
+          "score": 0.328045129776001
+        },
+        {
+          "event_uid": "POLYUS:151857",
+          "title": "Will Wages Beat Inflation in 2026?",
+          "score": 0.32116061449050903
+        }
+      ]
+    },
+    {
+      "event_uid": "KALSHI:KXMIDTERMMOV-FL01R",
+      "title": "Florida's 1st District margin of victory",
+      "origin": "user_random_sample",
+      "review_status": "user_labeled",
+      "outcome": "found_top10",
+      "targets": [
+        {
+          "event_uid": "POLYUS:93301",
+          "title": "FL-01 House Election Margin of Victory",
+          "judgment": "likely_exact",
+          "score": 0.6002359390258789,
+          "rank_all": 1,
+          "rank_filtered": 1,
+          "in_pool": true
+        }
+      ],
+      "top_10_all": [
+        {
+          "event_uid": "POLYUS:93301",
+          "title": "FL-01 House Election Margin of Victory",
+          "score": 0.6002359390258789
+        },
+        {
+          "event_uid": "POLYUS:86692",
+          "title": "Florida Senate Election Margin of Victory",
+          "score": 0.5462135076522827
+        },
+        {
+          "event_uid": "POLYUS:93309",
+          "title": "FL-17 House Election Margin of Victory",
+          "score": 0.5317927002906799
+        },
+        {
+          "event_uid": "POLYUS:93307",
+          "title": "FL-07 House Election Margin of Victory",
+          "score": 0.5306901931762695
+        },
+        {
+          "event_uid": "POLYUS:93314",
+          "title": "FL-21 House Election Margin of Victory",
+          "score": 0.5298063158988953
+        },
+        {
+          "event_uid": "POLYUS:93308",
+          "title": "FL-15 House Election Margin of Victory",
+          "score": 0.5282942652702332
+        },
+        {
+          "event_uid": "POLYUS:86870",
+          "title": "Florida Governor Election Margin of Victory",
+          "score": 0.5276160836219788
+        },
+        {
+          "event_uid": "POLYUS:93315",
+          "title": "FL-18 House Election Margin of Victory",
+          "score": 0.5255876779556274
+        },
+        {
+          "event_uid": "POLYUS:93313",
+          "title": "FL-11 House Election Margin of Victory",
+          "score": 0.5234724879264832
+        },
+        {
+          "event_uid": "POLYUS:93316",
+          "title": "FL-19 House Election Margin of Victory",
+          "score": 0.5222256779670715
+        }
+      ],
+      "top_10_filtered": [
+        {
+          "event_uid": "POLYUS:93301",
+          "title": "FL-01 House Election Margin of Victory",
+          "score": 0.6002359390258789
+        },
+        {
+          "event_uid": "POLYUS:86692",
+          "title": "Florida Senate Election Margin of Victory",
+          "score": 0.5462135076522827
+        },
+        {
+          "event_uid": "POLYUS:93309",
+          "title": "FL-17 House Election Margin of Victory",
+          "score": 0.5317927002906799
+        },
+        {
+          "event_uid": "POLYUS:93307",
+          "title": "FL-07 House Election Margin of Victory",
+          "score": 0.5306901931762695
+        },
+        {
+          "event_uid": "POLYUS:93314",
+          "title": "FL-21 House Election Margin of Victory",
+          "score": 0.5298063158988953
+        },
+        {
+          "event_uid": "POLYUS:93308",
+          "title": "FL-15 House Election Margin of Victory",
+          "score": 0.5282942652702332
+        },
+        {
+          "event_uid": "POLYUS:86870",
+          "title": "Florida Governor Election Margin of Victory",
+          "score": 0.5276160836219788
+        },
+        {
+          "event_uid": "POLYUS:93315",
+          "title": "FL-18 House Election Margin of Victory",
+          "score": 0.5255876779556274
+        },
+        {
+          "event_uid": "POLYUS:93313",
+          "title": "FL-11 House Election Margin of Victory",
+          "score": 0.5234724879264832
+        },
+        {
+          "event_uid": "POLYUS:93316",
+          "title": "FL-19 House Election Margin of Victory",
+          "score": 0.5222256779670715
+        }
+      ]
+    },
+    {
+      "event_uid": "KALSHI:KXISRAELPM-26OCT27",
+      "title": "Prime Minister of Israel after the 2026 election?",
+      "origin": "user_random_sample",
+      "review_status": "user_labeled",
+      "outcome": "found_top10",
+      "targets": [
+        {
+          "event_uid": "POLYUS:47848",
+          "title": "Prime Minister of Israel After the Next Election",
+          "judgment": "likely_exact",
+          "score": 0.5340336561203003,
+          "rank_all": 1,
+          "rank_filtered": 1,
+          "in_pool": true
+        },
+        {
+          "event_uid": "POLYUS:151217",
+          "title": "Brazil, Israel, & US Senate Elections Combo",
+          "judgment": "possible",
+          "score": 0.34312912821769714,
+          "rank_all": 4,
+          "rank_filtered": 4,
+          "in_pool": true
+        },
+        {
+          "event_uid": "POLYUS:110134",
+          "title": "Which World Leaders Will Leave Office in 2026?",
+          "judgment": "possible",
+          "score": 0.3074824810028076,
+          "rank_all": 7,
+          "rank_filtered": 7,
+          "in_pool": true
+        }
+      ],
+      "top_10_all": [
+        {
+          "event_uid": "POLYUS:47848",
+          "title": "Prime Minister of Israel After the Next Election",
+          "score": 0.5340336561203003
+        },
+        {
+          "event_uid": "POLYUS:44392",
+          "title": "TIME Person of the Year 2026",
+          "score": 0.3536418080329895
+        },
+        {
+          "event_uid": "POLYUS:60956",
+          "title": "Who will be arrested in 2026?",
+          "score": 0.35073018074035645
+        },
+        {
+          "event_uid": "POLYUS:151217",
+          "title": "Brazil, Israel, & US Senate Elections Combo",
+          "score": 0.34312912821769714
+        },
+        {
+          "event_uid": "POLYUS:44781",
+          "title": "Who Will Announce a Presidential Run in 2026?",
+          "score": 0.33384791016578674
+        },
+        {
+          "event_uid": "POLYUS:44391",
+          "title": "Who Will Be Announced Out of Their Trump Admin Role in 2026?",
+          "score": 0.3077777028083801
+        },
+        {
+          "event_uid": "POLYUS:110134",
+          "title": "Which World Leaders Will Leave Office in 2026?",
+          "score": 0.3074824810028076
+        },
+        {
+          "event_uid": "POLYUS:50263",
+          "title": "Who will Trump meet with by the end of 2026?",
+          "score": 0.30191484093666077
+        },
+        {
+          "event_uid": "POLYUS:60955",
+          "title": "Netanyahu Arrested?",
+          "score": 0.2984834909439087
+        },
+        {
+          "event_uid": "POLYUS:60957",
+          "title": "Prime Minister of Sweden After The Next Election",
+          "score": 0.28824111819267273
+        }
+      ],
+      "top_10_filtered": [
+        {
+          "event_uid": "POLYUS:47848",
+          "title": "Prime Minister of Israel After the Next Election",
+          "score": 0.5340336561203003
+        },
+        {
+          "event_uid": "POLYUS:44392",
+          "title": "TIME Person of the Year 2026",
+          "score": 0.3536418080329895
+        },
+        {
+          "event_uid": "POLYUS:60956",
+          "title": "Who will be arrested in 2026?",
+          "score": 0.35073018074035645
+        },
+        {
+          "event_uid": "POLYUS:151217",
+          "title": "Brazil, Israel, & US Senate Elections Combo",
+          "score": 0.34312912821769714
+        },
+        {
+          "event_uid": "POLYUS:44781",
+          "title": "Who Will Announce a Presidential Run in 2026?",
+          "score": 0.33384791016578674
+        },
+        {
+          "event_uid": "POLYUS:44391",
+          "title": "Who Will Be Announced Out of Their Trump Admin Role in 2026?",
+          "score": 0.3077777028083801
+        },
+        {
+          "event_uid": "POLYUS:110134",
+          "title": "Which World Leaders Will Leave Office in 2026?",
+          "score": 0.3074824810028076
+        },
+        {
+          "event_uid": "POLYUS:50263",
+          "title": "Who will Trump meet with by the end of 2026?",
+          "score": 0.30191484093666077
+        },
+        {
+          "event_uid": "POLYUS:60955",
+          "title": "Netanyahu Arrested?",
+          "score": 0.2984834909439087
+        },
+        {
+          "event_uid": "POLYUS:60957",
+          "title": "Prime Minister of Sweden After The Next Election",
+          "score": 0.28824111819267273
+        }
+      ]
+    },
+    {
+      "event_uid": "KALSHI:KXLLM1-26DEC31",
+      "title": "Best AI at the end of 2026?",
+      "origin": "user_random_sample",
+      "review_status": "user_labeled",
+      "outcome": "found_top10",
+      "targets": [
+        {
+          "event_uid": "POLYUS:44404",
+          "title": "Which Company Has #1 AI Model end of 2026?",
+          "judgment": "likely_exact",
+          "score": 0.5850002765655518,
+          "rank_all": 1,
+          "rank_filtered": 1,
+          "in_pool": true
+        },
+        {
+          "event_uid": "POLYUS:51412",
+          "title": "Which Companies will have #1 AI Model in 2026?",
+          "judgment": "possible",
+          "score": 0.5780392289161682,
+          "rank_all": 2,
+          "rank_filtered": 2,
+          "in_pool": true
+        },
+        {
+          "event_uid": "POLYUS:53725",
+          "title": "Which Company Has #1 AI Coding Model end of 2026?",
+          "judgment": "possible",
+          "score": 0.5639101266860962,
+          "rank_all": 3,
+          "rank_filtered": 3,
+          "in_pool": true
+        }
+      ],
+      "top_10_all": [
+        {
+          "event_uid": "POLYUS:44404",
+          "title": "Which Company Has #1 AI Model end of 2026?",
+          "score": 0.5850002765655518
+        },
+        {
+          "event_uid": "POLYUS:51412",
+          "title": "Which Companies will have #1 AI Model in 2026?",
+          "score": 0.5780392289161682
+        },
+        {
+          "event_uid": "POLYUS:53725",
+          "title": "Which Company Has #1 AI Coding Model end of 2026?",
+          "score": 0.5639101266860962
+        },
+        {
+          "event_uid": "POLYUS:250034",
+          "title": "Second-best AI Company end of November?",
+          "score": 0.48503774404525757
+        },
+        {
+          "event_uid": "POLYUS:250048",
+          "title": "Third-best AI Company end of November?",
+          "score": 0.480538934469223
+        },
+        {
+          "event_uid": "POLYUS:214407",
+          "title": "Best Chinese AI Company end of November?",
+          "score": 0.4772670865058899
+        },
+        {
+          "event_uid": "POLYUS:253776",
+          "title": "Third-Best Chinese AI Company end of November?",
+          "score": 0.44107091426849365
+        },
+        {
+          "event_uid": "POLYUS:253774",
+          "title": "Second-Best Chinese AI Company end of November?",
+          "score": 0.4370345175266266
+        },
+        {
+          "event_uid": "POLYUS:202195",
+          "title": "Top AI Company this week",
+          "score": 0.4353252053260803
+        },
+        {
+          "event_uid": "POLYUS:202235",
+          "title": "Top AI Company this week",
+          "score": 0.43532514572143555
+        }
+      ],
+      "top_10_filtered": [
+        {
+          "event_uid": "POLYUS:44404",
+          "title": "Which Company Has #1 AI Model end of 2026?",
+          "score": 0.5850002765655518
+        },
+        {
+          "event_uid": "POLYUS:51412",
+          "title": "Which Companies will have #1 AI Model in 2026?",
+          "score": 0.5780392289161682
+        },
+        {
+          "event_uid": "POLYUS:53725",
+          "title": "Which Company Has #1 AI Coding Model end of 2026?",
+          "score": 0.5639101266860962
+        },
+        {
+          "event_uid": "POLYUS:250034",
+          "title": "Second-best AI Company end of November?",
+          "score": 0.48503774404525757
+        },
+        {
+          "event_uid": "POLYUS:250048",
+          "title": "Third-best AI Company end of November?",
+          "score": 0.480538934469223
+        },
+        {
+          "event_uid": "POLYUS:214407",
+          "title": "Best Chinese AI Company end of November?",
+          "score": 0.4772670865058899
+        },
+        {
+          "event_uid": "POLYUS:253776",
+          "title": "Third-Best Chinese AI Company end of November?",
+          "score": 0.44107091426849365
+        },
+        {
+          "event_uid": "POLYUS:253774",
+          "title": "Second-Best Chinese AI Company end of November?",
+          "score": 0.4370345175266266
+        },
+        {
+          "event_uid": "POLYUS:202195",
+          "title": "Top AI Company this week",
+          "score": 0.4353252053260803
+        },
+        {
+          "event_uid": "POLYUS:202235",
+          "title": "Top AI Company this week",
+          "score": 0.43532514572143555
+        }
+      ]
+    },
+    {
+      "event_uid": "KALSHI:KXPRESPERSON-28",
+      "title": "2028 U.S. Presidential Election winner?",
+      "origin": "user_random_sample",
+      "review_status": "user_labeled",
+      "outcome": "found_top10",
+      "targets": [
+        {
+          "event_uid": "POLYUS:81090",
+          "title": "2028 US Presidential Election Winner",
+          "judgment": "likely_exact",
+          "score": 0.602245569229126,
+          "rank_all": 1,
+          "rank_filtered": 1,
+          "in_pool": true
+        },
+        {
+          "event_uid": "POLYUS:81089",
+          "title": "2028 US Presidential Election Winner (Party)",
+          "judgment": "possible",
+          "score": 0.5626378059387207,
+          "rank_all": 2,
+          "rank_filtered": 2,
+          "in_pool": true
+        },
+        {
+          "event_uid": "POLYUS:223506",
+          "title": "Who Will Announce a Presidential Run Before 2028?",
+          "judgment": "possible",
+          "score": 0.5140491724014282,
+          "rank_all": 11,
+          "rank_filtered": 11,
+          "in_pool": true
+        }
+      ],
+      "top_10_all": [
+        {
+          "event_uid": "POLYUS:81090",
+          "title": "2028 US Presidential Election Winner",
+          "score": 0.602245569229126
+        },
+        {
+          "event_uid": "POLYUS:81089",
+          "title": "2028 US Presidential Election Winner (Party)",
+          "score": 0.5626378059387207
+        },
+        {
+          "event_uid": "POLYUS:259046",
+          "title": "2028 Presidential Election: Washington Winner",
+          "score": 0.529403030872345
+        },
+        {
+          "event_uid": "POLYUS:259052",
+          "title": "2028 Presidential Election: New York Winner",
+          "score": 0.523745059967041
+        },
+        {
+          "event_uid": "POLYUS:199636",
+          "title": "2028 Presidential Election: Iowa Winner",
+          "score": 0.5208321213722229
+        },
+        {
+          "event_uid": "POLYUS:199739",
+          "title": "2028 Presidential Election: New Hampshire Winner",
+          "score": 0.5171098113059998
+        },
+        {
+          "event_uid": "POLYUS:259068",
+          "title": "2028 Presidential Election: California Winner",
+          "score": 0.5165965557098389
+        },
+        {
+          "event_uid": "POLYUS:199633",
+          "title": "2028 Presidential Election: Maine Winner",
+          "score": 0.5164119005203247
+        },
+        {
+          "event_uid": "POLYUS:211220",
+          "title": "2028 U.S. Senate Election Winner",
+          "score": 0.5157309174537659
+        },
+        {
+          "event_uid": "POLYUS:199499",
+          "title": "2028 Presidential Election: Nevada Winner",
+          "score": 0.5153820514678955
+        }
+      ],
+      "top_10_filtered": [
+        {
+          "event_uid": "POLYUS:81090",
+          "title": "2028 US Presidential Election Winner",
+          "score": 0.602245569229126
+        },
+        {
+          "event_uid": "POLYUS:81089",
+          "title": "2028 US Presidential Election Winner (Party)",
+          "score": 0.5626378059387207
+        },
+        {
+          "event_uid": "POLYUS:259046",
+          "title": "2028 Presidential Election: Washington Winner",
+          "score": 0.529403030872345
+        },
+        {
+          "event_uid": "POLYUS:259052",
+          "title": "2028 Presidential Election: New York Winner",
+          "score": 0.523745059967041
+        },
+        {
+          "event_uid": "POLYUS:199636",
+          "title": "2028 Presidential Election: Iowa Winner",
+          "score": 0.5208321213722229
+        },
+        {
+          "event_uid": "POLYUS:199739",
+          "title": "2028 Presidential Election: New Hampshire Winner",
+          "score": 0.5171098113059998
+        },
+        {
+          "event_uid": "POLYUS:259068",
+          "title": "2028 Presidential Election: California Winner",
+          "score": 0.5165965557098389
+        },
+        {
+          "event_uid": "POLYUS:199633",
+          "title": "2028 Presidential Election: Maine Winner",
+          "score": 0.5164119005203247
+        },
+        {
+          "event_uid": "POLYUS:211220",
+          "title": "2028 U.S. Senate Election Winner",
+          "score": 0.5157309174537659
+        },
+        {
+          "event_uid": "POLYUS:199499",
+          "title": "2028 Presidential Election: Nevada Winner",
+          "score": 0.5153820514678955
+        }
+      ]
+    },
+    {
+      "event_uid": "KALSHI:GTA6",
+      "title": "Grand Theft Auto VI: Release date",
+      "origin": "user_random_sample",
+      "review_status": "user_labeled",
+      "outcome": "found_top10",
+      "targets": [
+        {
+          "event_uid": "POLYUS:17700",
+          "title": "GTA VI Released By?",
+          "judgment": "likely_exact",
+          "score": 0.5328688621520996,
+          "rank_all": 1,
+          "rank_filtered": 1,
+          "in_pool": true
+        }
+      ],
+      "top_10_all": [
+        {
+          "event_uid": "POLYUS:17700",
+          "title": "GTA VI Released By?",
+          "score": 0.5328688621520996
+        },
+        {
+          "event_uid": "POLYUS:251863",
+          "title": "\"GTA VI: The Album\" First Week Sales?",
+          "score": 0.43230679631233215
+        },
+        {
+          "event_uid": "POLYUS:110004",
+          "title": "Claude 6 Released?",
+          "score": 0.3123832643032074
+        },
+        {
+          "event_uid": "POLYUS:224287",
+          "title": "GPT Sol 6.2+ Released?",
+          "score": 0.2941838502883911
+        },
+        {
+          "event_uid": "POLYUS:109994",
+          "title": "GPT Astra 6.1 Released?",
+          "score": 0.28834614157676697
+        },
+        {
+          "event_uid": "POLYUS:224288",
+          "title": "GPT Terra 6.2+ Released?",
+          "score": 0.280006468296051
+        },
+        {
+          "event_uid": "POLYUS:109977",
+          "title": "GPT-7 Released?",
+          "score": 0.2548261880874634
+        },
+        {
+          "event_uid": "POLYUS:59419",
+          "title": "Grok 5 Released?",
+          "score": 0.2241591066122055
+        },
+        {
+          "event_uid": "POLYUS:235046",
+          "title": "Gemini Carbon Released?",
+          "score": 0.22070670127868652
+        },
+        {
+          "event_uid": "POLYUS:223752",
+          "title": "Claude Opus 5.6+ Released?",
+          "score": 0.21056360006332397
+        }
+      ],
+      "top_10_filtered": [
+        {
+          "event_uid": "POLYUS:17700",
+          "title": "GTA VI Released By?",
+          "score": 0.5328688621520996
+        },
+        {
+          "event_uid": "POLYUS:251863",
+          "title": "\"GTA VI: The Album\" First Week Sales?",
+          "score": 0.43230679631233215
+        },
+        {
+          "event_uid": "POLYUS:110004",
+          "title": "Claude 6 Released?",
+          "score": 0.3123832643032074
+        },
+        {
+          "event_uid": "POLYUS:224287",
+          "title": "GPT Sol 6.2+ Released?",
+          "score": 0.2941838502883911
+        },
+        {
+          "event_uid": "POLYUS:109994",
+          "title": "GPT Astra 6.1 Released?",
+          "score": 0.28834614157676697
+        },
+        {
+          "event_uid": "POLYUS:224288",
+          "title": "GPT Terra 6.2+ Released?",
+          "score": 0.280006468296051
+        },
+        {
+          "event_uid": "POLYUS:109977",
+          "title": "GPT-7 Released?",
+          "score": 0.2548261880874634
+        },
+        {
+          "event_uid": "POLYUS:59419",
+          "title": "Grok 5 Released?",
+          "score": 0.2241591066122055
+        },
+        {
+          "event_uid": "POLYUS:235046",
+          "title": "Gemini Carbon Released?",
+          "score": 0.22070670127868652
+        },
+        {
+          "event_uid": "POLYUS:223752",
+          "title": "Claude Opus 5.6+ Released?",
+          "score": 0.21056360006332397
+        }
+      ]
+    },
+    {
+      "event_uid": "KALSHI:KXNASDAQ100Y-26DEC31H1600",
+      "title": "Nasdaq-100 close price end of 2026?",
+      "origin": "user_random_sample",
+      "review_status": "user_labeled",
+      "outcome": "not_on_platform",
+      "targets": [],
+      "top_10_all": [
+        {
+          "event_uid": "POLYUS:58438",
+          "title": "Bitcoin price at the end of 2026?",
+          "score": 0.43198221921920776
+        },
+        {
+          "event_uid": "POLYUS:26292",
+          "title": "Which Companies Will Confirm an IPO in 2026?",
+          "score": 0.36015546321868896
+        },
+        {
+          "event_uid": "POLYUS:133492",
+          "title": "Will a Mag7 Company Launch a USD Stablecoin by December 31, 2026?",
+          "score": 0.34828343987464905
+        },
+        {
+          "event_uid": "POLYUS:44782",
+          "title": "Fed Rate Cut in 2026?",
+          "score": 0.3455088436603546
+        },
+        {
+          "event_uid": "POLYUS:110011",
+          "title": "US GDP Growth in 2026?",
+          "score": 0.3437129855155945
+        },
+        {
+          "event_uid": "POLYUS:122352",
+          "title": "Another Fed Rate Hike in 2026?",
+          "score": 0.34132248163223267
+        },
+        {
+          "event_uid": "POLYUS:58549",
+          "title": "Will Bitcoin be above ___ in 2026?",
+          "score": 0.33882641792297363
+        },
+        {
+          "event_uid": "POLYUS:44404",
+          "title": "Which Company Has #1 AI Model end of 2026?",
+          "score": 0.3275664150714874
+        },
+        {
+          "event_uid": "POLYUS:278738",
+          "title": "Will Target (TGT) beat Q3 FY2026 quarterly earnings?",
+          "score": 0.3231251835823059
+        },
+        {
+          "event_uid": "POLYUS:109973",
+          "title": "How High Will US Gas Prices Get in 2026?",
+          "score": 0.32109391689300537
+        }
+      ],
+      "top_10_filtered": [
+        {
+          "event_uid": "POLYUS:58438",
+          "title": "Bitcoin price at the end of 2026?",
+          "score": 0.43198221921920776
+        },
+        {
+          "event_uid": "POLYUS:26292",
+          "title": "Which Companies Will Confirm an IPO in 2026?",
+          "score": 0.36015546321868896
+        },
+        {
+          "event_uid": "POLYUS:133492",
+          "title": "Will a Mag7 Company Launch a USD Stablecoin by December 31, 2026?",
+          "score": 0.34828343987464905
+        },
+        {
+          "event_uid": "POLYUS:44782",
+          "title": "Fed Rate Cut in 2026?",
+          "score": 0.3455088436603546
+        },
+        {
+          "event_uid": "POLYUS:110011",
+          "title": "US GDP Growth in 2026?",
+          "score": 0.3437129855155945
+        },
+        {
+          "event_uid": "POLYUS:122352",
+          "title": "Another Fed Rate Hike in 2026?",
+          "score": 0.34132248163223267
+        },
+        {
+          "event_uid": "POLYUS:58549",
+          "title": "Will Bitcoin be above ___ in 2026?",
+          "score": 0.33882641792297363
+        },
+        {
+          "event_uid": "POLYUS:44404",
+          "title": "Which Company Has #1 AI Model end of 2026?",
+          "score": 0.3275664150714874
+        },
+        {
+          "event_uid": "POLYUS:278738",
+          "title": "Will Target (TGT) beat Q3 FY2026 quarterly earnings?",
+          "score": 0.3231251835823059
+        },
+        {
+          "event_uid": "POLYUS:109973",
+          "title": "How High Will US Gas Prices Get in 2026?",
+          "score": 0.32109391689300537
+        }
+      ]
+    },
+    {
+      "event_uid": "KALSHI:KXSPACEXCOUNT-26B",
+      "title": "How many launches will SpaceX have in 2026?",
+      "origin": "user_random_sample",
+      "review_status": "user_labeled",
+      "outcome": "not_on_platform",
+      "targets": [],
+      "top_10_all": [
+        {
+          "event_uid": "POLYUS:60956",
+          "title": "Who will be arrested in 2026?",
+          "score": 0.32711517810821533
+        },
+        {
+          "event_uid": "POLYUS:151859",
+          "title": "How Many US Homes Built in 2026?",
+          "score": 0.32069092988967896
+        },
+        {
+          "event_uid": "POLYUS:133492",
+          "title": "Will a Mag7 Company Launch a USD Stablecoin by December 31, 2026?",
+          "score": 0.3056976795196533
+        },
+        {
+          "event_uid": "POLYUS:44781",
+          "title": "Who Will Announce a Presidential Run in 2026?",
+          "score": 0.29919320344924927
+        },
+        {
+          "event_uid": "POLYUS:26292",
+          "title": "Which Companies Will Confirm an IPO in 2026?",
+          "score": 0.2988583445549011
+        },
+        {
+          "event_uid": "POLYUS:58438",
+          "title": "Bitcoin price at the end of 2026?",
+          "score": 0.29384487867355347
+        },
+        {
+          "event_uid": "POLYUS:44392",
+          "title": "TIME Person of the Year 2026",
+          "score": 0.288496732711792
+        },
+        {
+          "event_uid": "POLYUS:51412",
+          "title": "Which Companies will have #1 AI Model in 2026?",
+          "score": 0.287352055311203
+        },
+        {
+          "event_uid": "POLYUS:44391",
+          "title": "Who Will Be Announced Out of Their Trump Admin Role in 2026?",
+          "score": 0.28568583726882935
+        },
+        {
+          "event_uid": "POLYUS:148043",
+          "title": "#1 Searched Person on Google 2026?",
+          "score": 0.28450897336006165
+        }
+      ],
+      "top_10_filtered": [
+        {
+          "event_uid": "POLYUS:60956",
+          "title": "Who will be arrested in 2026?",
+          "score": 0.32711517810821533
+        },
+        {
+          "event_uid": "POLYUS:133492",
+          "title": "Will a Mag7 Company Launch a USD Stablecoin by December 31, 2026?",
+          "score": 0.3056976795196533
+        },
+        {
+          "event_uid": "POLYUS:44781",
+          "title": "Who Will Announce a Presidential Run in 2026?",
+          "score": 0.29919320344924927
+        },
+        {
+          "event_uid": "POLYUS:26292",
+          "title": "Which Companies Will Confirm an IPO in 2026?",
+          "score": 0.2988583445549011
+        },
+        {
+          "event_uid": "POLYUS:58438",
+          "title": "Bitcoin price at the end of 2026?",
+          "score": 0.29384487867355347
+        },
+        {
+          "event_uid": "POLYUS:51412",
+          "title": "Which Companies will have #1 AI Model in 2026?",
+          "score": 0.287352055311203
+        },
+        {
+          "event_uid": "POLYUS:44391",
+          "title": "Who Will Be Announced Out of Their Trump Admin Role in 2026?",
+          "score": 0.28568583726882935
+        },
+        {
+          "event_uid": "POLYUS:50263",
+          "title": "Who will Trump meet with by the end of 2026?",
+          "score": 0.27811819314956665
+        },
+        {
+          "event_uid": "POLYUS:58549",
+          "title": "Will Bitcoin be above ___ in 2026?",
+          "score": 0.2737047076225281
+        },
+        {
+          "event_uid": "POLYUS:60950",
+          "title": "US Measles Cases in 2026?",
+          "score": 0.2697644829750061
+        }
+      ]
+    },
+    {
+      "event_uid": "KALSHI:KXPRESNOMR-28",
+      "title": "2028 Republican presidential nominee",
+      "origin": "user_random_sample",
+      "review_status": "user_labeled",
+      "outcome": "found_top10",
+      "targets": [
+        {
+          "event_uid": "POLYUS:81103",
+          "title": "2028 Republican Presidential Nominee",
+          "judgment": "likely_exact",
+          "score": 0.616304874420166,
+          "rank_all": 1,
+          "rank_filtered": 1,
+          "in_pool": true
+        },
+        {
+          "event_uid": "POLYUS:223506",
+          "title": "Who Will Announce a Presidential Run Before 2028?",
+          "judgment": "possible",
+          "score": 0.4135533571243286,
+          "rank_all": 7,
+          "rank_filtered": 7,
+          "in_pool": true
+        },
+        {
+          "event_uid": "POLYUS:81089",
+          "title": "2028 US Presidential Election Winner (Party)",
+          "judgment": "possible",
+          "score": 0.3882177770137787,
+          "rank_all": 11,
+          "rank_filtered": 11,
+          "in_pool": true
+        }
+      ],
+      "top_10_all": [
+        {
+          "event_uid": "POLYUS:81103",
+          "title": "2028 Republican Presidential Nominee",
+          "score": 0.616304874420166
+        },
+        {
+          "event_uid": "POLYUS:204235",
+          "title": "2028 Republican VP Nominee",
+          "score": 0.5737119913101196
+        },
+        {
+          "event_uid": "POLYUS:235689",
+          "title": "2028 South Carolina Republican Presidential Primary Winner",
+          "score": 0.487385094165802
+        },
+        {
+          "event_uid": "POLYUS:235690",
+          "title": "2028 Iowa Republican Presidential Caucus Winner",
+          "score": 0.47733598947525024
+        },
+        {
+          "event_uid": "POLYUS:81102",
+          "title": "2028 Democratic Presidential Nominee",
+          "score": 0.44479691982269287
+        },
+        {
+          "event_uid": "POLYUS:204234",
+          "title": "2028 Democratic VP Nominee",
+          "score": 0.41836416721343994
+        },
+        {
+          "event_uid": "POLYUS:223506",
+          "title": "Who Will Announce a Presidential Run Before 2028?",
+          "score": 0.4135533571243286
+        },
+        {
+          "event_uid": "POLYUS:81090",
+          "title": "2028 US Presidential Election Winner",
+          "score": 0.4103392958641052
+        },
+        {
+          "event_uid": "POLYUS:281472",
+          "title": "2027 Mississippi Governor Republican Nominee",
+          "score": 0.3925539255142212
+        },
+        {
+          "event_uid": "POLYUS:281433",
+          "title": "2027 Minnesota Senate Republican Nominee",
+          "score": 0.3923434615135193
+        }
+      ],
+      "top_10_filtered": [
+        {
+          "event_uid": "POLYUS:81103",
+          "title": "2028 Republican Presidential Nominee",
+          "score": 0.616304874420166
+        },
+        {
+          "event_uid": "POLYUS:204235",
+          "title": "2028 Republican VP Nominee",
+          "score": 0.5737119913101196
+        },
+        {
+          "event_uid": "POLYUS:235689",
+          "title": "2028 South Carolina Republican Presidential Primary Winner",
+          "score": 0.487385094165802
+        },
+        {
+          "event_uid": "POLYUS:235690",
+          "title": "2028 Iowa Republican Presidential Caucus Winner",
+          "score": 0.47733598947525024
+        },
+        {
+          "event_uid": "POLYUS:81102",
+          "title": "2028 Democratic Presidential Nominee",
+          "score": 0.44479691982269287
+        },
+        {
+          "event_uid": "POLYUS:204234",
+          "title": "2028 Democratic VP Nominee",
+          "score": 0.41836416721343994
+        },
+        {
+          "event_uid": "POLYUS:223506",
+          "title": "Who Will Announce a Presidential Run Before 2028?",
+          "score": 0.4135533571243286
+        },
+        {
+          "event_uid": "POLYUS:81090",
+          "title": "2028 US Presidential Election Winner",
+          "score": 0.4103392958641052
+        },
+        {
+          "event_uid": "POLYUS:281472",
+          "title": "2027 Mississippi Governor Republican Nominee",
+          "score": 0.3925539255142212
+        },
+        {
+          "event_uid": "POLYUS:281433",
+          "title": "2027 Minnesota Senate Republican Nominee",
+          "score": 0.3923434615135193
+        }
+      ]
+    },
+    {
+      "event_uid": "KALSHI:KXHOUSERACE-WA05-26",
+      "title": "WA-05 House winner?",
+      "origin": "user_random_sample",
+      "review_status": "user_labeled",
+      "outcome": "found_top10",
+      "targets": [
+        {
+          "event_uid": "POLYUS:81380",
+          "title": "WA-05 House Election Winner",
+          "judgment": "likely_exact",
+          "score": 0.6947269439697266,
+          "rank_all": 1,
+          "rank_filtered": 1,
+          "in_pool": true
+        },
+        {
+          "event_uid": "POLYUS:101606",
+          "title": "WA-05 House Election Margin of Victory",
+          "judgment": "possible",
+          "score": 0.6353920102119446,
+          "rank_all": 2,
+          "rank_filtered": 2,
+          "in_pool": true
+        }
+      ],
+      "top_10_all": [
+        {
+          "event_uid": "POLYUS:81380",
+          "title": "WA-05 House Election Winner",
+          "score": 0.6947269439697266
+        },
+        {
+          "event_uid": "POLYUS:101606",
+          "title": "WA-05 House Election Margin of Victory",
+          "score": 0.6353920102119446
+        },
+        {
+          "event_uid": "POLYUS:81379",
+          "title": "WA-04 House Election Winner",
+          "score": 0.5935982465744019
+        },
+        {
+          "event_uid": "POLYUS:101612",
+          "title": "WA-06 House Election Margin of Victory",
+          "score": 0.5372949838638306
+        },
+        {
+          "event_uid": "POLYUS:101608",
+          "title": "WA-02 House Election Margin of Victory",
+          "score": 0.5347689986228943
+        },
+        {
+          "event_uid": "POLYUS:101607",
+          "title": "WA-01 House Election Margin of Victory",
+          "score": 0.5337040424346924
+        },
+        {
+          "event_uid": "POLYUS:101615",
+          "title": "WA-09 House Election Margin of Victory",
+          "score": 0.5309078693389893
+        },
+        {
+          "event_uid": "POLYUS:101609",
+          "title": "WA-04 House Election Margin of Victory",
+          "score": 0.5303323268890381
+        },
+        {
+          "event_uid": "POLYUS:101613",
+          "title": "WA-08 House Election Margin of Victory",
+          "score": 0.5241101384162903
+        },
+        {
+          "event_uid": "POLYUS:101614",
+          "title": "WA-07 House Election Margin of Victory",
+          "score": 0.522225558757782
+        }
+      ],
+      "top_10_filtered": [
+        {
+          "event_uid": "POLYUS:81380",
+          "title": "WA-05 House Election Winner",
+          "score": 0.6947269439697266
+        },
+        {
+          "event_uid": "POLYUS:101606",
+          "title": "WA-05 House Election Margin of Victory",
+          "score": 0.6353920102119446
+        },
+        {
+          "event_uid": "POLYUS:81379",
+          "title": "WA-04 House Election Winner",
+          "score": 0.5935982465744019
+        },
+        {
+          "event_uid": "POLYUS:101612",
+          "title": "WA-06 House Election Margin of Victory",
+          "score": 0.5372949838638306
+        },
+        {
+          "event_uid": "POLYUS:101608",
+          "title": "WA-02 House Election Margin of Victory",
+          "score": 0.5347689986228943
+        },
+        {
+          "event_uid": "POLYUS:101607",
+          "title": "WA-01 House Election Margin of Victory",
+          "score": 0.5337040424346924
+        },
+        {
+          "event_uid": "POLYUS:101615",
+          "title": "WA-09 House Election Margin of Victory",
+          "score": 0.5309078693389893
+        },
+        {
+          "event_uid": "POLYUS:101609",
+          "title": "WA-04 House Election Margin of Victory",
+          "score": 0.5303323268890381
+        },
+        {
+          "event_uid": "POLYUS:101613",
+          "title": "WA-08 House Election Margin of Victory",
+          "score": 0.5241101384162903
+        },
+        {
+          "event_uid": "POLYUS:101614",
+          "title": "WA-07 House Election Margin of Victory",
+          "score": 0.522225558757782
+        }
+      ]
+    },
+    {
+      "event_uid": "KALSHI:SENATEAK-26",
+      "title": "Alaska Senate winner?",
+      "origin": "user_random_sample",
+      "review_status": "user_labeled",
+      "outcome": "found_top10",
+      "targets": [
+        {
+          "event_uid": "POLYUS:15710",
+          "title": "Alaska Senate Election Winner",
+          "judgment": "likely_exact",
+          "score": 0.6495338678359985,
+          "rank_all": 1,
+          "rank_filtered": 1,
+          "in_pool": true
+        }
+      ],
+      "top_10_all": [
+        {
+          "event_uid": "POLYUS:15710",
+          "title": "Alaska Senate Election Winner",
+          "score": 0.6495338678359985
+        },
+        {
+          "event_uid": "POLYUS:86299",
+          "title": "Alaska Senate Election: Turnout",
+          "score": 0.5602091550827026
+        },
+        {
+          "event_uid": "POLYUS:80945",
+          "title": "Alaska Governor Election Winner",
+          "score": 0.5390969514846802
+        },
+        {
+          "event_uid": "POLYUS:116500",
+          "title": "Alaska Ranked Choice Voting Repeal Referendum",
+          "score": 0.4530147314071655
+        },
+        {
+          "event_uid": "POLYUS:132404",
+          "title": "Closer Senate Race: Texas or Alaska?",
+          "score": 0.44451385736465454
+        },
+        {
+          "event_uid": "POLYUS:199738",
+          "title": "2028 Presidential Election: Alaska Winner",
+          "score": 0.4393136203289032
+        },
+        {
+          "event_uid": "POLYUS:87280",
+          "title": "AK-AL House Election Winner",
+          "score": 0.4147794842720032
+        },
+        {
+          "event_uid": "POLYUS:223698",
+          "title": "Senate Combo: Iowa, South Carolina, Alaska",
+          "score": 0.39886245131492615
+        },
+        {
+          "event_uid": "POLYUS:86537",
+          "title": "Alabama Senate Election Margin of Victory",
+          "score": 0.3925561308860779
+        },
+        {
+          "event_uid": "POLYUS:86536",
+          "title": "Alabama Senate Election: Turnout",
+          "score": 0.37231284379959106
+        }
+      ],
+      "top_10_filtered": [
+        {
+          "event_uid": "POLYUS:15710",
+          "title": "Alaska Senate Election Winner",
+          "score": 0.6495338678359985
+        },
+        {
+          "event_uid": "POLYUS:86299",
+          "title": "Alaska Senate Election: Turnout",
+          "score": 0.5602091550827026
+        },
+        {
+          "event_uid": "POLYUS:80945",
+          "title": "Alaska Governor Election Winner",
+          "score": 0.5390969514846802
+        },
+        {
+          "event_uid": "POLYUS:116500",
+          "title": "Alaska Ranked Choice Voting Repeal Referendum",
+          "score": 0.4530147314071655
+        },
+        {
+          "event_uid": "POLYUS:132404",
+          "title": "Closer Senate Race: Texas or Alaska?",
+          "score": 0.44451385736465454
+        },
+        {
+          "event_uid": "POLYUS:199738",
+          "title": "2028 Presidential Election: Alaska Winner",
+          "score": 0.4393136203289032
+        },
+        {
+          "event_uid": "POLYUS:87280",
+          "title": "AK-AL House Election Winner",
+          "score": 0.4147794842720032
+        },
+        {
+          "event_uid": "POLYUS:223698",
+          "title": "Senate Combo: Iowa, South Carolina, Alaska",
+          "score": 0.39886245131492615
+        },
+        {
+          "event_uid": "POLYUS:86537",
+          "title": "Alabama Senate Election Margin of Victory",
+          "score": 0.3925561308860779
+        },
+        {
+          "event_uid": "POLYUS:86536",
+          "title": "Alabama Senate Election: Turnout",
+          "score": 0.37231284379959106
+        }
+      ]
+    },
+    {
+      "event_uid": "KALSHI:KXBTC2026200-27JAN01",
+      "title": "Will Bitcoin be above $200k by 2027?",
+      "origin": "user_random_sample",
+      "review_status": "user_labeled",
+      "outcome": "found_top10",
+      "targets": [
+        {
+          "event_uid": "POLYUS:58549",
+          "title": "Will Bitcoin be above ___ in 2026?",
+          "judgment": "possible",
+          "score": 0.5213077068328857,
+          "rank_all": 1,
+          "rank_filtered": 1,
+          "in_pool": true
+        },
+        {
+          "event_uid": "POLYUS:58438",
+          "title": "Bitcoin price at the end of 2026?",
+          "judgment": "possible",
+          "score": 0.5072488784790039,
+          "rank_all": 2,
+          "rank_filtered": 2,
+          "in_pool": true
+        },
+        {
+          "event_uid": "POLYUS:47983",
+          "title": "When will Bitcoin hit $150k?",
+          "judgment": "possible",
+          "score": 0.4832218587398529,
+          "rank_all": 3,
+          "rank_filtered": 3,
+          "in_pool": true
+        }
+      ],
+      "top_10_all": [
+        {
+          "event_uid": "POLYUS:58549",
+          "title": "Will Bitcoin be above ___ in 2026?",
+          "score": 0.5213077068328857
+        },
+        {
+          "event_uid": "POLYUS:58438",
+          "title": "Bitcoin price at the end of 2026?",
+          "score": 0.5072488784790039
+        },
+        {
+          "event_uid": "POLYUS:47983",
+          "title": "When will Bitcoin hit $150k?",
+          "score": 0.4832218587398529
+        },
+        {
+          "event_uid": "POLYUS:47984",
+          "title": "How high will Bitcoin get this year?",
+          "score": 0.48027104139328003
+        },
+        {
+          "event_uid": "POLYUS:58495",
+          "title": "When will Bitcoin cross $100k again?",
+          "score": 0.47682952880859375
+        },
+        {
+          "event_uid": "POLYUS:216670",
+          "title": "How high will BTC get in November?",
+          "score": 0.4380759000778198
+        },
+        {
+          "event_uid": "POLYUS:58445",
+          "title": "How low will Bitcoin get this year?",
+          "score": 0.43482574820518494
+        },
+        {
+          "event_uid": "POLYUS:266891",
+          "title": "How high will BTC get by 5:00PM ET on Fri, Nov 20?",
+          "score": 0.4336775541305542
+        },
+        {
+          "event_uid": "POLYUS:216671",
+          "title": "How low will BTC get in November?",
+          "score": 0.39911216497421265
+        },
+        {
+          "event_uid": "POLYUS:278370",
+          "title": "BTC Up or Down Daily",
+          "score": 0.3973968029022217
+        }
+      ],
+      "top_10_filtered": [
+        {
+          "event_uid": "POLYUS:58549",
+          "title": "Will Bitcoin be above ___ in 2026?",
+          "score": 0.5213077068328857
+        },
+        {
+          "event_uid": "POLYUS:58438",
+          "title": "Bitcoin price at the end of 2026?",
+          "score": 0.5072488784790039
+        },
+        {
+          "event_uid": "POLYUS:47983",
+          "title": "When will Bitcoin hit $150k?",
+          "score": 0.4832218587398529
+        },
+        {
+          "event_uid": "POLYUS:47984",
+          "title": "How high will Bitcoin get this year?",
+          "score": 0.48027104139328003
+        },
+        {
+          "event_uid": "POLYUS:58495",
+          "title": "When will Bitcoin cross $100k again?",
+          "score": 0.47682952880859375
+        },
+        {
+          "event_uid": "POLYUS:216670",
+          "title": "How high will BTC get in November?",
+          "score": 0.4380759000778198
+        },
+        {
+          "event_uid": "POLYUS:58445",
+          "title": "How low will Bitcoin get this year?",
+          "score": 0.43482574820518494
+        },
+        {
+          "event_uid": "POLYUS:266891",
+          "title": "How high will BTC get by 5:00PM ET on Fri, Nov 20?",
+          "score": 0.4336775541305542
+        },
+        {
+          "event_uid": "POLYUS:216671",
+          "title": "How low will BTC get in November?",
+          "score": 0.39911216497421265
+        },
+        {
+          "event_uid": "POLYUS:278370",
+          "title": "BTC Up or Down Daily",
+          "score": 0.3973968029022217
+        }
+      ]
+    },
+    {
+      "event_uid": "KALSHI:KXHEGSETHOUT-26APR",
+      "title": "Pete Hegseth out as Secretary of Defense?",
+      "origin": "user_random_sample",
+      "review_status": "user_labeled",
+      "outcome": "found_top10",
+      "targets": [
+        {
+          "event_uid": "POLYUS:44388",
+          "title": "Pete Hegseth Announced Out as Secretary of War?",
+          "judgment": "likely_exact",
+          "score": 0.6147953271865845,
+          "rank_all": 1,
+          "rank_filtered": 1,
+          "in_pool": true
+        },
+        {
+          "event_uid": "POLYUS:110133",
+          "title": "Next Trump Cabinet Member Announced Out?",
+          "judgment": "possible",
+          "score": 0.33075153827667236,
+          "rank_all": 6,
+          "rank_filtered": 6,
+          "in_pool": true
+        },
+        {
+          "event_uid": "POLYUS:44391",
+          "title": "Who Will Be Announced Out of Their Trump Admin Role in 2026?",
+          "judgment": "possible",
+          "score": 0.3030781149864197,
+          "rank_all": 12,
+          "rank_filtered": 12,
+          "in_pool": true
+        }
+      ],
+      "top_10_all": [
+        {
+          "event_uid": "POLYUS:44388",
+          "title": "Pete Hegseth Announced Out as Secretary of War?",
+          "score": 0.6147953271865845
+        },
+        {
+          "event_uid": "POLYUS:254385",
+          "title": "Pete Hegseth Impeached?",
+          "score": 0.5253785252571106
+        },
+        {
+          "event_uid": "POLYUS:254480",
+          "title": "Pete Hegseth Impeached and Convicted?",
+          "score": 0.49541884660720825
+        },
+        {
+          "event_uid": "POLYUS:266936",
+          "title": "Sean Duffy Announced Out as Secretary of Transportation?",
+          "score": 0.34691286087036133
+        },
+        {
+          "event_uid": "POLYUS:235048",
+          "title": "Marco Rubio Announced Out as Secretary of State?",
+          "score": 0.33258914947509766
+        },
+        {
+          "event_uid": "POLYUS:110133",
+          "title": "Next Trump Cabinet Member Announced Out?",
+          "score": 0.33075153827667236
+        },
+        {
+          "event_uid": "POLYUS:250240",
+          "title": "Next Trump Cabinet Member Announced Out?",
+          "score": 0.3307514190673828
+        },
+        {
+          "event_uid": "POLYUS:51408",
+          "title": "Trump Resigns?",
+          "score": 0.3167593777179718
+        },
+        {
+          "event_uid": "POLYUS:44387",
+          "title": "Kash Patel Announced Out as FBI Director?",
+          "score": 0.316062867641449
+        },
+        {
+          "event_uid": "POLYUS:47822",
+          "title": "US Withdraws From NATO?",
+          "score": 0.31591367721557617
+        }
+      ],
+      "top_10_filtered": [
+        {
+          "event_uid": "POLYUS:44388",
+          "title": "Pete Hegseth Announced Out as Secretary of War?",
+          "score": 0.6147953271865845
+        },
+        {
+          "event_uid": "POLYUS:254385",
+          "title": "Pete Hegseth Impeached?",
+          "score": 0.5253785252571106
+        },
+        {
+          "event_uid": "POLYUS:254480",
+          "title": "Pete Hegseth Impeached and Convicted?",
+          "score": 0.49541884660720825
+        },
+        {
+          "event_uid": "POLYUS:266936",
+          "title": "Sean Duffy Announced Out as Secretary of Transportation?",
+          "score": 0.34691286087036133
+        },
+        {
+          "event_uid": "POLYUS:235048",
+          "title": "Marco Rubio Announced Out as Secretary of State?",
+          "score": 0.33258914947509766
+        },
+        {
+          "event_uid": "POLYUS:110133",
+          "title": "Next Trump Cabinet Member Announced Out?",
+          "score": 0.33075153827667236
+        },
+        {
+          "event_uid": "POLYUS:250240",
+          "title": "Next Trump Cabinet Member Announced Out?",
+          "score": 0.3307514190673828
+        },
+        {
+          "event_uid": "POLYUS:51408",
+          "title": "Trump Resigns?",
+          "score": 0.3167593777179718
+        },
+        {
+          "event_uid": "POLYUS:44387",
+          "title": "Kash Patel Announced Out as FBI Director?",
+          "score": 0.316062867641449
+        },
+        {
+          "event_uid": "POLYUS:47822",
+          "title": "US Withdraws From NATO?",
+          "score": 0.31591367721557617
+        }
+      ]
+    },
+    {
+      "event_uid": "KALSHI:KXCPICOREYOY-26NOV",
+      "title": "Core CPI YoY in November",
+      "origin": "assistant_handpicked",
+      "review_status": "needs_user_review",
+      "outcome": "in_collection_not_top10",
+      "targets": [
+        {
+          "event_uid": "POLYUS:258047",
+          "title": "Core CPI YoY in November",
+          "judgment": "proposed_likely_exact",
+          "score": 0.7197573184967041,
+          "rank_all": 1,
+          "rank_filtered": 1,
+          "in_pool": true
+        }
+      ],
+      "top_10_all": [
+        {
+          "event_uid": "POLYUS:258047",
+          "title": "Core CPI YoY in November",
+          "score": 0.7197573184967041
+        },
+        {
+          "event_uid": "POLYUS:258017",
+          "title": "Core CPI MoM in November",
+          "score": 0.673620879650116
+        },
+        {
+          "event_uid": "POLYUS:258023",
+          "title": "CPI YoY in November",
+          "score": 0.6405275464057922
+        },
+        {
+          "event_uid": "POLYUS:165237",
+          "title": "Core CPI YoY in October",
+          "score": 0.6196058988571167
+        },
+        {
+          "event_uid": "POLYUS:165230",
+          "title": "Core CPI MoM in October",
+          "score": 0.5702327489852905
+        },
+        {
+          "event_uid": "POLYUS:165138",
+          "title": "CPI YoY in October",
+          "score": 0.5294337272644043
+        },
+        {
+          "event_uid": "POLYUS:258011",
+          "title": "CPI MoM in November",
+          "score": 0.5137596130371094
+        },
+        {
+          "event_uid": "POLYUS:165229",
+          "title": "CPI MoM in October",
+          "score": 0.4248189330101013
+        },
+        {
+          "event_uid": "POLYUS:239481",
+          "title": "November Unemployment Rate",
+          "score": 0.4203292429447174
+        },
+        {
+          "event_uid": "POLYUS:266575",
+          "title": "2-YR Treasury Yield on November 20?",
+          "score": 0.3828803300857544
+        }
+      ],
+      "top_10_filtered": [
+        {
+          "event_uid": "POLYUS:258047",
+          "title": "Core CPI YoY in November",
+          "score": 0.7197573184967041
+        },
+        {
+          "event_uid": "POLYUS:258017",
+          "title": "Core CPI MoM in November",
+          "score": 0.673620879650116
+        },
+        {
+          "event_uid": "POLYUS:258023",
+          "title": "CPI YoY in November",
+          "score": 0.6405275464057922
+        },
+        {
+          "event_uid": "POLYUS:165237",
+          "title": "Core CPI YoY in October",
+          "score": 0.6196058988571167
+        },
+        {
+          "event_uid": "POLYUS:165230",
+          "title": "Core CPI MoM in October",
+          "score": 0.5702327489852905
+        },
+        {
+          "event_uid": "POLYUS:165138",
+          "title": "CPI YoY in October",
+          "score": 0.5294337272644043
+        },
+        {
+          "event_uid": "POLYUS:258011",
+          "title": "CPI MoM in November",
+          "score": 0.5137596130371094
+        },
+        {
+          "event_uid": "POLYUS:165229",
+          "title": "CPI MoM in October",
+          "score": 0.4248189330101013
+        },
+        {
+          "event_uid": "POLYUS:239481",
+          "title": "November Unemployment Rate",
+          "score": 0.4203292429447174
+        },
+        {
+          "event_uid": "POLYUS:266575",
+          "title": "2-YR Treasury Yield on November 20?",
+          "score": 0.3828803300857544
+        }
+      ]
+    },
+    {
+      "event_uid": "KALSHI:KXGGWINNER-DIR27",
+      "title": "Golden Globe Winner: Best Director",
+      "origin": "assistant_handpicked",
+      "review_status": "needs_user_review",
+      "outcome": "in_collection_not_top10",
+      "targets": [
+        {
+          "event_uid": "POLYUS:250381",
+          "title": "Golden Globe Winner: Best Director",
+          "judgment": "proposed_likely_exact",
+          "score": 0.6154158115386963,
+          "rank_all": 1,
+          "rank_filtered": 1,
+          "in_pool": true
+        }
+      ],
+      "top_10_all": [
+        {
+          "event_uid": "POLYUS:250381",
+          "title": "Golden Globe Winner: Best Director",
+          "score": 0.6154158115386963
+        },
+        {
+          "event_uid": "POLYUS:250347",
+          "title": "Golden Globe Nominees: Best Director",
+          "score": 0.520479142665863
+        },
+        {
+          "event_uid": "POLYUS:250382",
+          "title": "Golden Globe Winner: Best Motion Picture  Drama",
+          "score": 0.4893544018268585
+        },
+        {
+          "event_uid": "POLYUS:250379",
+          "title": "Golden Globe Winner: Best Actor  Drama",
+          "score": 0.48029637336730957
+        },
+        {
+          "event_uid": "POLYUS:250385",
+          "title": "Golden Globe Winner: Best Screenplay  Motion Picture",
+          "score": 0.4782082438468933
+        },
+        {
+          "event_uid": "POLYUS:250380",
+          "title": "Golden Globe Winner: Best Actress  Drama",
+          "score": 0.46303266286849976
+        },
+        {
+          "event_uid": "POLYUS:250383",
+          "title": "Golden Globe Winner: Best Supporting Actor  Motion Picture",
+          "score": 0.45491647720336914
+        },
+        {
+          "event_uid": "POLYUS:281395",
+          "title": "Critics Choice Winner: Best Director",
+          "score": 0.44305935502052307
+        },
+        {
+          "event_uid": "POLYUS:160434",
+          "title": "Oscar Winner: Best Director",
+          "score": 0.44016462564468384
+        },
+        {
+          "event_uid": "POLYUS:250375",
+          "title": "Golden Globe Winner: Best Motion Picture  Animated",
+          "score": 0.4318329691886902
+        }
+      ],
+      "top_10_filtered": [
+        {
+          "event_uid": "POLYUS:250381",
+          "title": "Golden Globe Winner: Best Director",
+          "score": 0.6154158115386963
+        },
+        {
+          "event_uid": "POLYUS:250347",
+          "title": "Golden Globe Nominees: Best Director",
+          "score": 0.520479142665863
+        },
+        {
+          "event_uid": "POLYUS:250382",
+          "title": "Golden Globe Winner: Best Motion Picture  Drama",
+          "score": 0.4893544018268585
+        },
+        {
+          "event_uid": "POLYUS:250379",
+          "title": "Golden Globe Winner: Best Actor  Drama",
+          "score": 0.48029637336730957
+        },
+        {
+          "event_uid": "POLYUS:250385",
+          "title": "Golden Globe Winner: Best Screenplay  Motion Picture",
+          "score": 0.4782082438468933
+        },
+        {
+          "event_uid": "POLYUS:250380",
+          "title": "Golden Globe Winner: Best Actress  Drama",
+          "score": 0.46303266286849976
+        },
+        {
+          "event_uid": "POLYUS:250383",
+          "title": "Golden Globe Winner: Best Supporting Actor  Motion Picture",
+          "score": 0.45491647720336914
+        },
+        {
+          "event_uid": "POLYUS:281395",
+          "title": "Critics Choice Winner: Best Director",
+          "score": 0.44305935502052307
+        },
+        {
+          "event_uid": "POLYUS:160434",
+          "title": "Oscar Winner: Best Director",
+          "score": 0.44016462564468384
+        },
+        {
+          "event_uid": "POLYUS:250375",
+          "title": "Golden Globe Winner: Best Motion Picture  Animated",
+          "score": 0.4318329691886902
+        }
+      ]
+    },
+    {
+      "event_uid": "KALSHI:KXMAYORCHI-27",
+      "title": "Chicago mayoral election winner? (2027)",
+      "origin": "assistant_handpicked",
+      "review_status": "needs_user_review",
+      "outcome": "in_collection_not_top10",
+      "targets": [
+        {
+          "event_uid": "POLYUS:266568",
+          "title": "Chicago Mayoral Election Winner",
+          "judgment": "proposed_likely_exact",
+          "score": 0.5605349540710449,
+          "rank_all": 1,
+          "rank_filtered": 1,
+          "in_pool": true
+        }
+      ],
+      "top_10_all": [
+        {
+          "event_uid": "POLYUS:266568",
+          "title": "Chicago Mayoral Election Winner",
+          "score": 0.5605349540710449
+        },
+        {
+          "event_uid": "POLYUS:259063",
+          "title": "2028 Presidential Election: Illinois Winner",
+          "score": 0.4177432954311371
+        },
+        {
+          "event_uid": "POLYUS:255637",
+          "title": "2027 Minnesota Senate Special Election Winner",
+          "score": 0.36932581663131714
+        },
+        {
+          "event_uid": "POLYUS:255634",
+          "title": "2027 Mississippi Governor Election Winner",
+          "score": 0.3621668815612793
+        },
+        {
+          "event_uid": "POLYUS:47847",
+          "title": "2027 French Presidential Election Winner",
+          "score": 0.3611110746860504
+        },
+        {
+          "event_uid": "POLYUS:255635",
+          "title": "2027 Louisiana Governor Election Winner",
+          "score": 0.36078161001205444
+        },
+        {
+          "event_uid": "POLYUS:202920",
+          "title": "Chicago State vs. Incarnate Word",
+          "score": 0.3493601679801941
+        },
+        {
+          "event_uid": "POLYUS:255636",
+          "title": "2027 Kentucky Governor Election Winner",
+          "score": 0.34571778774261475
+        },
+        {
+          "event_uid": "POLYUS:199465",
+          "title": "2028 Presidential Election: Michigan Winner",
+          "score": 0.34348779916763306
+        },
+        {
+          "event_uid": "POLYUS:40966",
+          "title": "2027 NBA Champion",
+          "score": 0.3431774079799652
+        }
+      ],
+      "top_10_filtered": [
+        {
+          "event_uid": "POLYUS:266568",
+          "title": "Chicago Mayoral Election Winner",
+          "score": 0.5605349540710449
+        },
+        {
+          "event_uid": "POLYUS:259063",
+          "title": "2028 Presidential Election: Illinois Winner",
+          "score": 0.4177432954311371
+        },
+        {
+          "event_uid": "POLYUS:255637",
+          "title": "2027 Minnesota Senate Special Election Winner",
+          "score": 0.36932581663131714
+        },
+        {
+          "event_uid": "POLYUS:255634",
+          "title": "2027 Mississippi Governor Election Winner",
+          "score": 0.3621668815612793
+        },
+        {
+          "event_uid": "POLYUS:47847",
+          "title": "2027 French Presidential Election Winner",
+          "score": 0.3611110746860504
+        },
+        {
+          "event_uid": "POLYUS:255635",
+          "title": "2027 Louisiana Governor Election Winner",
+          "score": 0.36078161001205444
+        },
+        {
+          "event_uid": "POLYUS:255636",
+          "title": "2027 Kentucky Governor Election Winner",
+          "score": 0.34571778774261475
+        },
+        {
+          "event_uid": "POLYUS:199465",
+          "title": "2028 Presidential Election: Michigan Winner",
+          "score": 0.34348779916763306
+        },
+        {
+          "event_uid": "POLYUS:86876",
+          "title": "Illinois Governor Election Margin of Victory",
+          "score": 0.33827757835388184
+        },
+        {
+          "event_uid": "POLYUS:255353",
+          "title": "Who Will Be Impeached by June 30, 2027?",
+          "score": 0.3352949619293213
+        }
+      ]
+    },
+    {
+      "event_uid": "KALSHI:KXHEGSETHIMPEACH-27JUL01",
+      "title": "Will Pete Hegseth be impeached?",
+      "origin": "assistant_handpicked",
+      "review_status": "needs_user_review",
+      "outcome": "in_collection_not_top10",
+      "targets": [
+        {
+          "event_uid": "POLYUS:254385",
+          "title": "Pete Hegseth Impeached?",
+          "judgment": "proposed_likely_exact",
+          "score": 0.6324101686477661,
+          "rank_all": 1,
+          "rank_filtered": 1,
+          "in_pool": true
+        }
+      ],
+      "top_10_all": [
+        {
+          "event_uid": "POLYUS:254385",
+          "title": "Pete Hegseth Impeached?",
+          "score": 0.6324101686477661
+        },
+        {
+          "event_uid": "POLYUS:254480",
+          "title": "Pete Hegseth Impeached and Convicted?",
+          "score": 0.6066107153892517
+        },
+        {
+          "event_uid": "POLYUS:44388",
+          "title": "Pete Hegseth Announced Out as Secretary of War?",
+          "score": 0.4353525638580322
+        },
+        {
+          "event_uid": "POLYUS:47821",
+          "title": "Trump Impeached?",
+          "score": 0.3838723301887512
+        },
+        {
+          "event_uid": "POLYUS:255353",
+          "title": "Who Will Be Impeached by June 30, 2027?",
+          "score": 0.381645143032074
+        },
+        {
+          "event_uid": "POLYUS:60955",
+          "title": "Netanyahu Arrested?",
+          "score": 0.27007171511650085
+        },
+        {
+          "event_uid": "POLYUS:261853",
+          "title": "Will Jensen Huang Testify Before Congress?",
+          "score": 0.26985225081443787
+        },
+        {
+          "event_uid": "POLYUS:51408",
+          "title": "Trump Resigns?",
+          "score": 0.2677139937877655
+        },
+        {
+          "event_uid": "POLYUS:255342",
+          "title": "JD Vance Resigns as Vice President?",
+          "score": 0.25079837441444397
+        },
+        {
+          "event_uid": "POLYUS:115199",
+          "title": "Closest Senate Race?",
+          "score": 0.24969854950904846
+        }
+      ],
+      "top_10_filtered": [
+        {
+          "event_uid": "POLYUS:254385",
+          "title": "Pete Hegseth Impeached?",
+          "score": 0.6324101686477661
+        },
+        {
+          "event_uid": "POLYUS:254480",
+          "title": "Pete Hegseth Impeached and Convicted?",
+          "score": 0.6066107153892517
+        },
+        {
+          "event_uid": "POLYUS:44388",
+          "title": "Pete Hegseth Announced Out as Secretary of War?",
+          "score": 0.4353525638580322
+        },
+        {
+          "event_uid": "POLYUS:47821",
+          "title": "Trump Impeached?",
+          "score": 0.3838723301887512
+        },
+        {
+          "event_uid": "POLYUS:255353",
+          "title": "Who Will Be Impeached by June 30, 2027?",
+          "score": 0.381645143032074
+        },
+        {
+          "event_uid": "POLYUS:60955",
+          "title": "Netanyahu Arrested?",
+          "score": 0.27007171511650085
+        },
+        {
+          "event_uid": "POLYUS:261853",
+          "title": "Will Jensen Huang Testify Before Congress?",
+          "score": 0.26985225081443787
+        },
+        {
+          "event_uid": "POLYUS:51408",
+          "title": "Trump Resigns?",
+          "score": 0.2677139937877655
+        },
+        {
+          "event_uid": "POLYUS:255342",
+          "title": "JD Vance Resigns as Vice President?",
+          "score": 0.25079837441444397
+        },
+        {
+          "event_uid": "POLYUS:115199",
+          "title": "Closest Senate Race?",
+          "score": 0.24969854950904846
+        }
+      ]
+    },
+    {
+      "event_uid": "KALSHI:KXRT-FOC",
+      "title": "Focker-In-Law · Rotten Tomatoes score",
+      "origin": "assistant_handpicked",
+      "review_status": "needs_user_review",
+      "outcome": "in_collection_not_top10",
+      "targets": [
+        {
+          "event_uid": "POLYUS:238960",
+          "title": "Focker-In-Law Rotten Tomatoes Score?",
+          "judgment": "proposed_likely_exact",
+          "score": 0.7279165387153625,
+          "rank_all": 1,
+          "rank_filtered": 1,
+          "in_pool": true
+        }
+      ],
+      "top_10_all": [
+        {
+          "event_uid": "POLYUS:238960",
+          "title": "Focker-In-Law Rotten Tomatoes Score?",
+          "score": 0.7279165387153625
+        },
+        {
+          "event_uid": "POLYUS:238963",
+          "title": "I Play Rocky Rotten Tomatoes Score?",
+          "score": 0.36841344833374023
+        },
+        {
+          "event_uid": "POLYUS:251259",
+          "title": "The Further Mis-Adventures of Cliff Booth Rotten Tomatoes Score?",
+          "score": 0.36597490310668945
+        },
+        {
+          "event_uid": "POLYUS:238962",
+          "title": "Hexed Rotten Tomatoes Score?",
+          "score": 0.35852691531181335
+        },
+        {
+          "event_uid": "POLYUS:198532",
+          "title": "The Cat in the Hat Rotten Tomatoes Score?",
+          "score": 0.3434300422668457
+        },
+        {
+          "event_uid": "POLYUS:238961",
+          "title": "Hershey Rotten Tomatoes Score?",
+          "score": 0.3191179037094116
+        },
+        {
+          "event_uid": "POLYUS:265838",
+          "title": "Tender Loving Care Rotten Tomatoes Score?",
+          "score": 0.318559467792511
+        },
+        {
+          "event_uid": "POLYUS:265837",
+          "title": "Behemoth! Rotten Tomatoes Score?",
+          "score": 0.3112272620201111
+        },
+        {
+          "event_uid": "POLYUS:126457",
+          "title": "Avengers: Doomsday Rotten Tomatoes Score?",
+          "score": 0.2963027358055115
+        },
+        {
+          "event_uid": "POLYUS:266440",
+          "title": "Marlene Foerster vs. Sofia Rocchetti",
+          "score": 0.2930087149143219
+        }
+      ],
+      "top_10_filtered": [
+        {
+          "event_uid": "POLYUS:238960",
+          "title": "Focker-In-Law Rotten Tomatoes Score?",
+          "score": 0.7279165387153625
+        },
+        {
+          "event_uid": "POLYUS:238963",
+          "title": "I Play Rocky Rotten Tomatoes Score?",
+          "score": 0.36841344833374023
+        },
+        {
+          "event_uid": "POLYUS:251259",
+          "title": "The Further Mis-Adventures of Cliff Booth Rotten Tomatoes Score?",
+          "score": 0.36597490310668945
+        },
+        {
+          "event_uid": "POLYUS:238962",
+          "title": "Hexed Rotten Tomatoes Score?",
+          "score": 0.35852691531181335
+        },
+        {
+          "event_uid": "POLYUS:198532",
+          "title": "The Cat in the Hat Rotten Tomatoes Score?",
+          "score": 0.3434300422668457
+        },
+        {
+          "event_uid": "POLYUS:238961",
+          "title": "Hershey Rotten Tomatoes Score?",
+          "score": 0.3191179037094116
+        },
+        {
+          "event_uid": "POLYUS:265838",
+          "title": "Tender Loving Care Rotten Tomatoes Score?",
+          "score": 0.318559467792511
+        },
+        {
+          "event_uid": "POLYUS:265837",
+          "title": "Behemoth! Rotten Tomatoes Score?",
+          "score": 0.3112272620201111
+        },
+        {
+          "event_uid": "POLYUS:126457",
+          "title": "Avengers: Doomsday Rotten Tomatoes Score?",
+          "score": 0.2963027358055115
+        },
+        {
+          "event_uid": "POLYUS:266440",
+          "title": "Marlene Foerster vs. Sofia Rocchetti",
+          "score": 0.2930087149143219
+        }
+      ]
+    }
+  ],
+  "note": "All is unfiltered; filtered uses current category/sports mappings. Proposed labels require review. Current profile snapshot contains open markets only."
+}
