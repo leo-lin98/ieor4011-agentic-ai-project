@@ -1,6 +1,6 @@
 # Embeddings system: structure and technical debt
 
-This is a historical review from November 17, 2026. Some workflows described below have since been changed or removed; see [the evaluation guide](../evaluation/retrieval/README.md) for the current files.
+This is a historical review from November 17, 2026. Some workflows described below have since been changed or removed; see [the evaluation guide](../../evaluation/retrieval/README.md) for the current files.
 
 ## Purpose and current state
 
@@ -43,18 +43,19 @@ Collector → market_profiles.parquet
 
 | File | Role |
 | --- | --- |
-| [README.md](../README.md) | Project setup and collector overview; describes the market profiles used as input. It does not currently introduce the embeddings workflow. |
-| [embeddings/README.md](../embeddings/README.md) | Practical commands, model access, and the basic review workflow. |
-| [docs/event_matching_plan.md](event_matching_plan.md) | Event-first design and intended phases, including representation comparison and review. Closest high-level description of the current architecture. |
-| [docs/embeddings_plan.md](embeddings_plan.md) | Earlier matching plan, evaluation rationale, and mapping proposals. Some details reflect an earlier market-level design, so compare it with the event-first plan and implementation. |
-| [embeddings/embed.py](../embeddings/embed.py) | Command-line entry point: selects events, loads the model, calls the cache and ranking code, and writes results and run metadata. |
-| [embeddings/prepare.py](../embeddings/prepare.py) | Loads profiles, groups contracts into events, detects metadata issues, and creates embedding text. |
-| [embeddings/cache.py](../embeddings/cache.py) | Generates and persists normalized vectors in a content-addressed SQLite cache. |
-| [embeddings/search.py](../embeddings/search.py) | Validates mappings, applies category and sports filters, and performs exact similarity ranking. |
-| [embeddings/config/categories.json](../embeddings/config/categories.json), [sports.json](../embeddings/config/sports.json) | Hand-maintained cross-platform category and sport mappings used by search. |
-| [embeddings/reporting/browser.py](../embeddings/reporting/browser.py), [database.py](../embeddings/reporting/database.py) | Serve the local results browser and build its report database. |
-| [evaluation/retrieval/README.md](../evaluation/retrieval/README.md) | Current evaluation data, scripts, and saved results. |
-| [tests/test_embeddings.py](../tests/test_embeddings.py), [tests/test_volume.py](../tests/test_volume.py) | Small unit-test suite for grouping, caching, filtering, ranking, reporting, evaluation, and volume aggregation. |
+| [README.md](../../README.md) | Project setup and collector overview; describes the market profiles used as input. It does not currently introduce the embeddings workflow. |
+| [embeddings/README.md](../../embeddings/README.md) | Practical commands, model access, and the basic review workflow. |
+| [docs/embeddings/event_matching_plan.md](event_matching_plan.md) | Event-first design and intended phases, including representation comparison and review. Closest high-level description of the current architecture. |
+| [embeddings/embed.py](../../embeddings/embed.py) | Command-line entry point: selects events, loads the model, calls the cache and ranking code, and writes results and run metadata. |
+| [embeddings/prepare.py](../../embeddings/prepare.py) | Loads profiles, groups contracts into events, detects metadata issues, and creates embedding text. |
+| [embeddings/cache.py](../../embeddings/cache.py) | Generates and persists normalized vectors in a content-addressed SQLite cache. |
+| [embeddings/search.py](../../embeddings/search.py) | Validates mappings, applies category and sports filters, and performs exact similarity ranking. |
+| [embeddings/config/categories.json](../../embeddings/config/categories.json), [sports.json](../../embeddings/config/sports.json) | Hand-maintained cross-platform category and sport mappings used by search. |
+| [embeddings/reporting/browser.py](../../embeddings/reporting/browser.py), [database.py](../../embeddings/reporting/database.py) | Serve the local results browser and build its report database. |
+| [evaluation/retrieval/README.md](../../evaluation/retrieval/README.md) | Current evaluation data, scripts, and saved results. |
+| [tests/test_embeddings.py](../../tests/test_embeddings.py), [tests/test_volume.py](../../tests/test_volume.py) | Small unit-test suite for grouping, caching, filtering, ranking, reporting, evaluation, and volume aggregation. |
+
+The [category breakdown](figures/market-category-breakdown.svg) shows the initial November 5, 2026 profile snapshot.
 
 Generated caches and reports normally live in `data/embeddings/`, which is ignored by Git. The checked-in profiles are a snapshot, so results describe that data rather than necessarily current markets.
 
@@ -71,7 +72,7 @@ Technical debt is work deferred through an expedient design or incomplete proces
 
 ### Next priorities
 
-5. **Documentation has drifted.** The earlier embeddings plan describes market-level input fields and experiments that differ from the event-first implementation. The README focuses on the collector and its setup comment omits the embedding dependencies. Clarify which plan is historical and link the active usage guide from the README.
+5. **Documentation has drifted.** At the time of this review, the earlier plan described a market-level design and the project README did not link the usage guide. The outdated plan has since been removed; consult the event-matching plan and current guides.
 6. **Reproducibility is incomplete.** The code records the resolved model commit, representation, mapping hash, candidate IDs, and profile issue counts, which is useful. Dependencies in `requirements.txt` have lower bounds rather than a lock, and output metadata does not fingerprint the input profile snapshot or record the full runtime configuration. A pinned environment and input/run provenance would make comparisons easier to reproduce.
 7. **Scaling is costly.** Ranking scans eligible candidates per query; normal output also stores full rankings and exclusions per query and repeats displayed event details. The streamed writer reduces peak output memory, but full outputs and evaluation can still grow substantially. Measure real runtimes and file sizes before choosing indexing or format changes.
 8. **Presentation and pipeline responsibilities are mixed.** The report generator includes HTML, CSS, and Python rendering in one file; batch reporting adds a custom streaming JSON reader and optional compressed pages. The entry point also handles orchestration, selection, model loading, and serialization. Separating stable interfaces from presentation would make changes and tests easier.
@@ -80,7 +81,7 @@ Technical debt is work deferred through an expedient design or incomplete proces
 
 ## Suggested cleanup order
 
-1. Make setup and the current architecture easy to reproduce and document which plan is authoritative.
+1. Make setup and the current architecture easy to reproduce and keep the current guides up to date.
 2. Create a small, independently reviewed benchmark with difficult positives and negatives; preserve a held-out split.
 3. Agree on a versioned result schema and add targeted end-to-end tests for generation, reporting, and evaluation.
 4. Use benchmark results and profiling to guide representation, filter, performance, and refactoring decisions.
