@@ -26,17 +26,28 @@ def iter_results(path):
         prefix = '{"metadata":'
         if not buffer.startswith(prefix): raise ValueError('Expected streamed retrieval output')
         buffer = buffer[len(prefix):]
+        meta = decode()
         delimiter = ',"results":['
-        while delimiter not in buffer:
-            if eof: raise ValueError('Missing results array')
+        while len(buffer) < len(delimiter) and not eof:
             read_more()
-        pos = buffer.index(delimiter)
-        meta = json.loads(buffer[:pos])
-        buffer = buffer[pos + len(delimiter):]
+        if not buffer.startswith(delimiter):
+            raise ValueError('Missing results array')
+        buffer = buffer[len(delimiter):]
         yield meta
+        first = True
         while True:
             buffer = buffer.lstrip()
             if not buffer and not eof: read_more(); continue
-            if buffer.startswith(']'): break
-            if buffer.startswith(','): buffer = buffer[1:].lstrip()
+            if buffer.startswith(']'):
+                buffer = buffer[1:]
+                break
+            if not first:
+                if not buffer.startswith(','): raise ValueError('Missing result separator')
+                buffer = buffer[1:].lstrip()
+                while not buffer and not eof: read_more(); buffer = buffer.lstrip()
+                if buffer.startswith(']'): raise ValueError('Trailing comma in results')
             yield decode()
+            first = False
+        while not eof: read_more()
+        if buffer.strip() != '}':
+            raise ValueError('Invalid or incomplete retrieval output ending')

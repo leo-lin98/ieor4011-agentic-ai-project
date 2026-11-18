@@ -6,7 +6,10 @@ JSON containing run metadata, event queries, and ranked candidates; the optional
 top-only mode writes a smaller result without full ranking information.
 """
 import argparse
+from contextlib import contextmanager
 import json
+import os
+import tempfile
 import time
 from pathlib import Path
 import re
@@ -15,6 +18,26 @@ import pandas as pd
 from .prepare import load, build_events
 from .cache import embed_events
 from .search import configs, rank, eligible
+
+def validate_output_path(output, profiles, cache):
+    out = Path(output).resolve()
+    for name, source in (('profiles', profiles), ('cache', cache)):
+        path = Path(source).resolve()
+        if out == path or (out.exists() and path.exists() and os.path.samefile(out, path)):
+            raise ValueError(f'Output must be separate from {name}')
+
+@contextmanager
+def atomic_output(path):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, temporary = tempfile.mkstemp(prefix='.candidates-', suffix='.tmp', dir=path.parent)
+    try:
+        with os.fdopen(fd, 'w', encoding='utf-8') as f:
+            yield f
+        os.replace(temporary, path)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
 
 def resolve_revision(model_name, revision):
     """Resolve the exact Hub snapshot before loading weights or looking up vectors."""
@@ -43,6 +66,10 @@ def main():
     p.add_argument('--device', choices=('cpu', 'mps', 'cuda'))
     a = p.parse_args()
     if a.queries < 1 or a.top_k < 1 or (a.candidates is not None and a.candidates < 1): p.error('sizes must be positive')
+    try:
+        validate_output_path(a.output, a.profiles, a.cache)
+    except ValueError as exc:
+        p.error(str(exc))
     start = time.perf_counter()
     def progress(message): print(f'[{time.perf_counter()-start:,.1f}s elapsed] {message}', flush=True)
     # Build event-level queries and candidates from the market profiles.
@@ -71,7 +98,7 @@ def main():
     c = embed_events(candidates, model, a.model, revision, a.representation, 'document', a.cache, progress)
     # Record the retrieval configuration alongside the ranked results.
     categories, sports, mapping_hash = configs()
-    out = Path(a.output); out.parent.mkdir(parents=True, exist_ok=True)
+    out = Path(a.output)
     metadata = {'model': a.model, 'revision': a.revision, 'resolved_revision': revision, 'representation': a.representation,
                 'mapping_sha256': mapping_hash, 'candidate_ids': [x['event_uid'] for x in candidates],
                 'profile_issues': issues, 'top_only': a.top_only}
@@ -80,7 +107,7 @@ def main():
     def serialize(value):
         return json.dumps(value, default=lambda x: x.tolist() if hasattr(x, 'tolist') else str(x))
     # Stream each result to avoid retaining the entire catalog's review records in memory.
-    with out.open('w', encoding='utf-8') as f:
+    with atomic_output(out) as f:
         f.write('{"metadata":' + serialize(metadata) + ',"results":[')
         for i, query in enumerate(queries):
             if i % 100 == 0: progress(f'Ranking {i+1:,}/{len(queries):,}: {query["event_uid"]}')
