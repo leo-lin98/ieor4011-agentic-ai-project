@@ -109,8 +109,8 @@ def handler_for(database):
         def do_GET(self):
             parsed = urlsplit(self.path)
             try:
-                if parsed.path in ('/', '/contracts'):
-                    page = PAGE if parsed.path == '/' else CONTRACT_PAGE
+                if parsed.path in ('/', '/contracts', '/classification'):
+                    page = PAGE if parsed.path == '/' else (CONTRACT_PAGE if parsed.path == '/contracts' else Path(__file__).with_name('classification.html'))
                     self.respond(200, page.read_bytes(), 'text/html; charset=utf-8')
                     return
                 if parsed.path in ('/browser.css', '/browser.js'):
