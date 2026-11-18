@@ -1,8 +1,23 @@
 import unittest
-from evaluation.retrieval.evaluate_event_sample import evaluate
+import csv
+import tempfile
+from evaluation.retrieval.evaluate_event_sample import evaluate, load_cases
 
 
 class EventSampleEvaluationTests(unittest.TestCase):
+    def test_multiple_sets_keep_their_ids(self):
+        rows = [dict(set_id=s, kalshi_uid=k, outcome='not_on_platform',
+                     related_events='[]', suggestions='[]') for s, k in [('first', 'k1'), ('second', 'k2')]]
+        with tempfile.NamedTemporaryFile(mode='w+', newline='', encoding='utf-8') as f:
+            writer = csv.DictWriter(f, fieldnames=rows[0].keys())
+            writer.writeheader()
+            writer.writerows(rows)
+            f.flush()
+            report = evaluate(load_cases(f.name))
+        self.assertEqual(report['set_ids'], ['first', 'second'])
+        self.assertIsNone(report['set_id'])
+        self.assertEqual(report['events'], 2)
+
     def test_event_level_hits_multiple_labels_and_pool_exclusions(self):
         rows = [
             {'set_id': 's', 'kalshi_uid': 'k1', 'outcome': 'found_top10',

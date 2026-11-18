@@ -64,12 +64,21 @@ python -m embeddings.reporting.browser
 
 Open <http://127.0.0.1:8765/> and select **View candidates**. The browser shows only the events and suggestions saved in your run. Rebuild the database after a new run. Volume comes from saved Kalshi data and may be missing or incomplete.
 
+In **Random evaluation set**, choose sports, non-sports, or all categories and a sampling method to create a set of 20 events. Sports and non-sports use the saved Kalshi category; unclassified events are included only in all categories. Volume-weighted sampling requires positive volume, so use uniform sampling to include events with zero or missing volume. At least 20 eligible events must be present in the report. The event list also has a category filter.
+
 Reviews are saved in your browser. Download the review CSV to keep a backup. Press Ctrl+C to stop the server.
 
 ## What we found
 
-We reviewed 20 randomly selected non-sports Kalshi events, sampled with higher-volume events more likely to be selected. For 17, the suggestions included a likely exact or possible match (human labeled based on event title). The other three were marked as having no counterpart on Polymarket US.
+We reviewed two random samples of 20 Kalshi events each, with higher-volume events more likely to be selected. Based on the saved suggestions and human judgments:
 
-We also reviewed five handpicked pairs whose Polymarket events were missing from the original candidate pool and confirmed them as likely exact matches. In a later run using a larger snapshot, all five appeared first. The 15 likely-exact matches labeled in the random sample also appeared first. These results used the earlier category mappings, before the sports versus non-sports filter was introduced.
+| Sample | Likely exact or possible match in suggestions | Marked as no counterpart on Polymarket US | Likely exact match ranked first |
+| --- | ---: | ---: | ---: |
+| Non-sports | 17 of 20 | 3 of 20 | 15 of 20 |
+| Sports | 18 of 20 | 2 of 20 | 17 of 20 |
 
-The [evaluation folder](../evaluation/retrieval/README.md) contains the reviewed pairs and saved results. The results are a useful early check, but the sample is small, contains no sports events, and many labels came from the original suggestions.
+These are event-level counts; an event can have both likely exact and possible labels. Judgments were based on event titles and should be checked against contract rules.
+
+We also reviewed five handpicked non-sports pairs whose Polymarket events were missing from the original candidate pool and confirmed them as likely exact matches. In a historical run using a larger snapshot, all five appeared first, as did the 15 likely-exact matches from the non-sports random sample. That run used earlier category mappings, before the sports versus non-sports filter was introduced, and did not include the sports sample.
+
+The [evaluation folder](../evaluation/retrieval/README.md) contains all 45 reviewed cases and the historical results. The random samples are small and volume-weighted, and many labels came from the original suggestions, so these counts are an early check rather than an independent recall benchmark.

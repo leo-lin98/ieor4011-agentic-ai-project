@@ -13,8 +13,6 @@ def load_cases(path):
     required = {'set_id', 'kalshi_uid', 'outcome', 'related_events', 'suggestions'}
     if not rows or not required.issubset(rows[0]):
         raise ValueError('Expected an evaluation-set CSV exported by the browser')
-    if len({r['set_id'] for r in rows}) != 1:
-        raise ValueError('CSV must contain a single evaluation set')
     if len({r['kalshi_uid'] for r in rows}) != len(rows):
         raise ValueError('CSV contains duplicate Kalshi events')
     for row in rows:
@@ -74,7 +72,9 @@ def evaluate(rows, results=None, pool=None, include_proposed=False):
         denominator = metric['events_with_targets_in_pool']
         metric['event_hit_rate_at_10'] = metric['events_with_any_target_in_top_10'] / denominator if denominator else None
         metric['event_hit_rate_at_5'] = metric['events_with_any_target_in_top_5'] / denominator if denominator else None
-    return {'set_id': rows[0]['set_id'], 'events': len(rows), 'outcomes': dict(outcomes),
+    set_ids = list(dict.fromkeys(row['set_id'] for row in rows))
+    return {'set_id': set_ids[0] if len(set_ids) == 1 else None, 'set_ids': set_ids,
+            'events': len(rows), 'outcomes': dict(outcomes),
             'proposed_labels_included': include_proposed,
             'case_origins': dict(Counter(row.get('case_origin', 'unspecified') for row in rows)),
             'source': 'exported baseline suggestions' if results is None else 'retrieval run',

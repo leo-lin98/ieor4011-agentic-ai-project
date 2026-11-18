@@ -32,6 +32,8 @@ def query_events(db, params):
     category = param('category', 'non-sports')
     if category == 'non-sports':
         conditions.append("e.category IS NOT NULL AND trim(e.category) <> '' AND lower(trim(e.category)) <> 'sports'")
+    elif category == 'sports':
+        conditions.append("lower(trim(e.category)) = 'sports'")
     elif category == 'unknown':
         conditions.append("(e.category IS NULL OR trim(e.category) = '')")
     elif category.startswith('category:'):
@@ -72,11 +74,13 @@ def query_events(db, params):
 
 def sample_events(db, seed, method='volume', category='non-sports', size=20):
     """Sample saved query events without replacement, with reproducible ordering."""
-    if method not in ('volume', 'uniform') or category not in ('all', 'non-sports'):
+    if method not in ('volume', 'uniform') or category not in ('all', 'sports', 'non-sports'):
         raise ValueError('Invalid sampling method or category')
     where = []
     if category == 'non-sports':
         where.append("category IS NOT NULL AND trim(category) <> '' AND lower(trim(category)) <> 'sports'")
+    elif category == 'sports':
+        where.append("lower(trim(category)) = 'sports'")
     if method == 'volume':
         where.append('total_volume > 0')
     clause = ' WHERE ' + ' AND '.join(where) if where else ''

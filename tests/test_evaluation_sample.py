@@ -38,6 +38,19 @@ class SamplingTests(unittest.TestCase):
         self.assertTrue(any(e['total_volume'] is None for e in sample['events']))
         self.assertEqual(next(e for e in sample['events'] if e['event_uid'] == '3')['candidates'][0]['candidate_uid'], 'p')
 
+    def test_sports_filter_and_volume_eligibility(self):
+        self.db.executemany('INSERT INTO events VALUES (?, ?, ?, ?, ?, ?)', [
+            ('s1', 'Game 1', ' sports ', 5, 1, 1),
+            ('s2', 'Game 2', 'SPORTS', 0, 1, 1),
+            ('unknown', 'Unknown', None, 10, 1, 1),
+        ])
+        uniform = sample_events(self.db, 2, 'uniform', 'sports', size=3)
+        self.assertEqual({e['event_uid'] for e in uniform['events']}, {'0', 's1', 's2'})
+        weighted = sample_events(self.db, 2, 'volume', 'sports', size=1)
+        self.assertEqual(weighted['eligible_events'], 1)
+        self.assertEqual(weighted['events'][0]['event_uid'], 's1')
+        self.assertEqual(weighted['category'], 'sports')
+
     def test_rejects_insufficient_or_invalid(self):
         with self.assertRaises(ValueError): sample_events(self.db, 1, 'volume', 'all', size=100)
         with self.assertRaises(ValueError): sample_events(self.db, 1, 'bogus', 'all')

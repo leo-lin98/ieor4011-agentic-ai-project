@@ -200,13 +200,14 @@ function refreshSets(selected) {
   const sets = readSets(), ids = Object.keys(sets).sort((a,b) => sets[b].created_at.localeCompare(sets[a].created_at));
   samplePicker.replaceChildren();
   for (const id of ids) {
-    const set = sets[id], option = el('option', `${new Date(set.created_at).toLocaleString()} · ${set.method === 'volume' ? 'Volume weighted' : 'Uniform'} · ${set.category === 'all' ? 'All categories' : 'Non-sports'}`);
+    const set = sets[id], option = el('option', `${new Date(set.created_at).toLocaleString()} · ${set.method === 'volume' ? 'Volume weighted' : 'Uniform'} · ${sampleCategoryLabel(set.category)}`);
     option.value = id; samplePicker.append(option);
   }
   document.querySelector('#sample-picker-label').hidden = !ids.length;
   if (ids.length) { samplePicker.value = sets[selected] ? selected : ids[0]; showSample(); }
   else samplePanel.replaceChildren();
 }
+function sampleCategoryLabel(category) { return ({'all': 'All categories', 'sports': 'Sports', 'non-sports': 'Non-sports'})[category] || category; }
 function sampleReviewsKey(id) { return 'embedding-evaluation-reviews-v1:' + id; }
 function showSample() {
   sampleError.textContent = '';
@@ -228,7 +229,7 @@ function showSample() {
       progress.textContent = `${hits} with related suggestions (${exact} likely exact; ${possible} possible) · ${misses} missed in collection · ${other} missing or unsure`; 
     }
     showEvaluationCounts(all); panel.append(progress);
-    panel.append(el('p', `Seed ${set.seed} · ${set.eligible_events.toLocaleString()} eligible events · ${set.method === 'volume' ? 'volume weighted' : 'uniform random'} · ${set.category === 'all' ? 'all categories' : 'non-sports'}`, 'notice'));
+    panel.append(el('p', `Seed ${set.seed} · ${set.eligible_events.toLocaleString()} eligible events · ${set.method === 'volume' ? 'volume weighted' : 'uniform random'} · ${sampleCategoryLabel(set.category)}`, 'notice'));
     panel.append(el('div', item.title || 'Untitled event', 'event-title'), el('small', item.event_uid));
     panel.append(el('p', `${item.category || 'Unclassified'} · ${item.total_volume === null ? 'Volume unavailable' : item.total_volume.toLocaleString(undefined, {maximumFractionDigits: 2}) + ' contracts traded'}${item.markets_with_volume < item.market_count ? ' (partial)' : ''}`));
     const review = makeReview(item, item.candidates, () => {
