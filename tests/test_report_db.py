@@ -44,6 +44,7 @@ class ReportDatabaseTests(unittest.TestCase):
                     WHERE e.category IS NOT NULL AND lower(trim(e.category)) <> 'sports'
                     ORDER BY e.total_volume IS NULL, e.total_volume DESC""").fetchall()
                 self.assertEqual(rows, [('e1', 20.0, 1, 2, 'Candidate')])
+                self.assertEqual(db.execute("SELECT market_uid, in_retrieval_pool FROM contracts WHERE market_uid='a'").fetchone(), ('a', 1))
                 self.assertEqual(db.execute("SELECT total_volume FROM events WHERE event_uid='e3'").fetchone(), (None,))
                 self.assertEqual(db.execute("SELECT value FROM run_metadata WHERE key='volume_snapshot_latest_ms'").fetchone(), ('2',))
 

@@ -4,11 +4,13 @@ from contextlib import closing
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import math
+import random
 from pathlib import Path
 import sqlite3
 from urllib.parse import parse_qs, urlsplit
 
 PAGE = Path(__file__).with_name('browser.html')
+CONTRACT_PAGE = Path(__file__).with_name('contracts.html')
 SORTS = {
     'volume': 'e.total_volume IS NULL, e.total_volume DESC, e.event_uid',
     'volume_asc': 'e.total_volume IS NULL, e.total_volume ASC, e.event_uid',
@@ -68,13 +70,49 @@ def query_events(db, params):
     return {'total': total, 'page': page, 'page_size': 50, 'events': [dict(row) for row in rows]}
 
 
+def sample_events(db, seed, method='volume', category='non-sports', size=20):
+    """Sample saved query events without replacement, with reproducible ordering."""
+    if method not in ('volume', 'uniform') or category not in ('all', 'non-sports'):
+        raise ValueError('Invalid sampling method or category')
+    where = []
+    if category == 'non-sports':
+        where.append("category IS NOT NULL AND trim(category) <> '' AND lower(trim(category)) <> 'sports'")
+    if method == 'volume':
+        where.append('total_volume > 0')
+    clause = ' WHERE ' + ' AND '.join(where) if where else ''
+    rows = [dict(row) for row in db.execute('SELECT * FROM events' + clause + ' ORDER BY event_uid')]
+    if method == 'volume':
+        rows = [row for row in rows if math.isfinite(row['total_volume'])]
+    if len(rows) < size:
+        raise ValueError(f'Only {len(rows)} eligible events; {size} are required')
+    rng = random.Random(seed)
+    if method == 'uniform':
+        selected = rng.sample(rows, size)
+    else:
+        # Exponential race gives sequential probability proportional to volume.
+        selected = sorted(rows, key=lambda row: math.log1p(-rng.random()) / row['total_volume'], reverse=True)[:size]
+    for row in selected:
+        row['candidates'] = [dict(candidate) for candidate in db.execute(
+            'SELECT rank, candidate_uid, candidate_title, candidate_category, score FROM matches WHERE event_uid = ? ORDER BY rank LIMIT 10',
+            (row['event_uid'],))]
+    snapshot = db.execute("SELECT value FROM run_metadata WHERE key='volume_snapshot_latest_ms'").fetchone()
+    return {'seed': seed, 'method': method, 'category': category, 'eligible_events': len(rows),
+            'snapshot_ms': json.loads(snapshot[0]) if snapshot else None, 'events': selected}
+
+
 def handler_for(database):
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
             parsed = urlsplit(self.path)
             try:
-                if parsed.path == '/':
-                    self.respond(200, PAGE.read_bytes(), 'text/html; charset=utf-8')
+                if parsed.path in ('/', '/contracts'):
+                    page = PAGE if parsed.path == '/' else CONTRACT_PAGE
+                    self.respond(200, page.read_bytes(), 'text/html; charset=utf-8')
+                    return
+                if parsed.path in ('/browser.css', '/browser.js'):
+                    asset = Path(__file__).with_name(parsed.path[1:])
+                    kind = 'text/css; charset=utf-8' if parsed.path.endswith('.css') else 'text/javascript; charset=utf-8'
+                    self.respond(200, asset.read_bytes(), kind)
                     return
                 with closing(connect(database)) as db:
                     params = parse_qs(parsed.query, keep_blank_values=True)
@@ -84,6 +122,51 @@ def handler_for(database):
                         result = {'categories': categories, 'snapshot_ms': json.loads(row[0]) if row else None}
                     elif parsed.path == '/api/events':
                         result = query_events(db, params)
+                    elif parsed.path == '/api/sample':
+                        try:
+                            seed = int(params.get('seed', [''])[0])
+                        except ValueError as exc:
+                            raise ValueError('Invalid sample seed') from exc
+                        if seed < 0 or seed > 4294967295:
+                            raise ValueError('Invalid sample seed')
+                        result = sample_events(db, seed, params.get('method', ['volume'])[0], params.get('category', ['non-sports'])[0])
+                    elif parsed.path == '/api/contracts':
+                        term = params.get('search', [''])[0].strip()
+                        event_uid = params.get('event_uid', [''])[0].strip()
+                        platform = params.get('platform', ['KALSHI'])[0]
+                        if platform not in ('KALSHI', 'POLYUS') or (not event_uid and len(term) < 2):
+                            raise ValueError('Enter at least two characters and select a platform')
+                        columns = "SELECT market_uid, platform, event_uid, title, market_title, yes_means, rules, market_url, category, in_retrieval_pool FROM contracts WHERE platform = ? AND "
+                        if event_uid:
+                            rows = db.execute(columns + 'event_uid = ? ORDER BY market_uid LIMIT 101', (platform, event_uid)).fetchall()
+                        else:
+                            rows = db.execute(columns + """(instr(lower(market_uid), lower(?)) > 0
+                                OR instr(lower(coalesce(event_uid, '')), lower(?)) > 0
+                                OR instr(lower(coalesce(title, '')), lower(?)) > 0
+                                OR instr(lower(coalesce(market_title, '')), lower(?)) > 0
+                                OR instr(lower(coalesce(yes_means, '')), lower(?)) > 0)
+                                ORDER BY market_uid LIMIT 101""", (platform, term, term, term, term, term)).fetchall()
+                        result = {'contracts': [dict(r) for r in rows[:100]], 'truncated': len(rows) > 100}
+                    elif parsed.path == '/api/collection-events':
+                        term = params.get('search', [''])[0].strip()
+                        if len(term) < 2:
+                            raise ValueError('Enter at least two characters')
+                        rows = db.execute("""SELECT event_uid, min(title) AS title,
+                            max(in_retrieval_pool) AS in_retrieval_pool, count(*) AS contract_count
+                            FROM contracts WHERE platform = 'POLYUS' AND event_uid IS NOT NULL
+                            AND (instr(lower(event_uid), lower(?)) > 0
+                                 OR instr(lower(coalesce(title, '')), lower(?)) > 0)
+                            GROUP BY event_uid ORDER BY title COLLATE NOCASE, event_uid LIMIT 101""", (term, term)).fetchall()
+                        result = {'events': [dict(row) for row in rows[:100]], 'truncated': len(rows) > 100}
+                    elif parsed.path == '/api/contract-pair':
+                        source = params.get('source', [''])[0].strip()
+                        target = params.get('target', [''])[0].strip()
+                        row = db.execute('''SELECT c.market_uid, c.event_uid, c.title, c.market_title,
+                            c.in_retrieval_pool, m.rank FROM contracts c
+                            LEFT JOIN contracts k ON k.market_uid = ? AND k.platform = 'KALSHI'
+                            LEFT JOIN matches m ON m.event_uid = k.event_uid AND m.candidate_uid = c.event_uid
+                            WHERE c.market_uid = ? AND c.platform = 'POLYUS' ''', (source, target)).fetchone()
+                        result = {'target': dict(row) if row else None}
                     elif parsed.path == '/api/matches':
                         uid = params.get('event_uid', [''])[0]
                         result = {'matches': [dict(r) for r in db.execute('SELECT rank, candidate_uid, candidate_title, candidate_category, score FROM matches WHERE event_uid = ? ORDER BY rank', (uid,))]}

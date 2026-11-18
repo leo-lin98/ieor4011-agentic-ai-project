@@ -67,3 +67,49 @@ python -m embeddings.reporting.browser
 ```
 
 Open <http://127.0.0.1:8765/>. Choose a category, search, set a minimum volume, and sort the results; select **View candidates** to see the saved matches for an event. The default non-sports filter excludes unclassified events; select **Unclassified** or **All categories** to include them. The server only listens on this computer. Stop it with Ctrl+C. Pass a different report path as the first argument or use `--port 8766` if the default port is occupied. The explorer reads the current report database, so rebuild it when you want newer retrieval results or snapshots.
+
+## Search and review contracts
+
+Rebuild the reporting database with `embeddings.reporting.database` after upgrading, so it includes contracts from both platforms' saved profiles. Start the explorer as above and select **Search and review contracts**. Search Kalshi or Polymarket US by title, option, or ID; the page reports whether the contract's event was included in the retrieval run. This searches the saved profile snapshot, not the live platforms. Results are limited to the first 100; refine broad searches.
+
+For a Kalshi contract, choose **Review this contract**. A confirmed match in the dataset requires the exact Polymarket contract ID; use the built-in Polymarket search to find it. The review records whether that contract's event appeared in the displayed event candidates. Other outcomes distinguish a match found on Polymarket but missing from the dataset, verified absence on Polymarket, an incomplete search, and uncertainty. Check rules and record evidence before claiming absence; use the incomplete or unsure outcome when you cannot verify it. A missing event candidate does not tell you why it was missed, and event similarity does not establish contract equivalence.
+
+Reviews are saved in the browser's local storage, not in SQLite, and may be lost if browser data is cleared. Download the CSV regularly. The CSV is a separate contract review format; it is not directly compatible with the existing `contract_cases.csv` evaluator. To summarize the exported reviews:
+
+```sh
+python -m evaluation.retrieval.review_contracts path/to/contract-reviews.csv
+```
+
+This counts outcomes and computes the fraction of reviewed matching contracts whose corresponding event was among the displayed candidates, excluding source events not run and targets outside the candidate pool. It is a contract-weighted measure of displayed **event** coverage, not full-pool recall or a contract matching accuracy score. Reviews selected by convenience may not represent the whole dataset. Set reviewer, split, and event group for later analysis, and keep related events in the same split.
+
+To check collection independently of event retrieval, use **Search and review contracts** at the top of the comparison page; it searches all saved profiles, including contracts whose events were not in the embedding run. The comparison page also links to the contracts belonging to each event.
+
+### Top-10 event review on the comparison page
+
+Select **Review suggestions** on a Kalshi event and mark each relevant suggestion as **Likely exact match** or **Possible match**. Save once to associate all selected event IDs, ranks, and judgments with that Kalshi event. Earlier related labels remain unclassified until you choose a category. If none is related, choose whether a related event is in the collection but was not suggested, is on Polymarket US but missing from the collection, does not exist on Polymarket US (verified), or remains uncertain. Use **Find an event in the collection** to search by title or ID and select an event that was missed. A listing on international Polymarket does not establish availability on Polymarket US. Saved profiles are a snapshot; absence from them alone does not prove platform-wide absence.
+
+Progress counts reviewed events rather than individual selections. The found-versus-missed count is conditional on the reviewed sample and labels; it measures candidate selection and retrieval together, not contract-level accuracy. If fewer than 10 suggestions were saved, only those saved are reviewable. Reviews are stored in the browser; download the CSV regularly. Each CSV row represents one Kalshi event and stores selected event IDs and ranks as JSON arrays. It is a separate format from the existing pairwise evaluator. Export reviews before changing runs, because the labels describe the suggestions at review time.
+
+### Random evaluation set
+
+In the comparison page's **Random evaluation set** panel, choose volume-weighted or uniform sampling, choose non-sports or all categories, then create a set of 20. Review and save each event before moving to the next. Classify multiple related suggestions as likely exact or possible, or record why none was found. The set picker lets you return to previous sets, and the evaluation CSV includes all 20 events (including unreviewed ones), their saved suggestions, choices, sampling method, seed, volume coverage, and source snapshot timestamp. The sample and labels are stored in this browser; download the CSV as a backup.
+
+Sampling is without replacement from the Kalshi events in the saved retrieval run. Volume-weighted selection uses each event's observed total volume as its relative weight; events with zero or missing volume are excluded, and partial totals are used as observed. Uniform sampling includes them. Non-sports excludes unclassified events. The sample's fixed seed makes the draw reproducible from the same report database. Suggestions are frozen with the sample, but collection searches use the currently loaded database; keep the report database unchanged during an evaluation. Creating another set does not replace earlier sets.
+
+The displayed counts separate likely exact and possible matches for reviewed events in this sample; an event may count in both. A volume-weighted sample emphasizes high-volume events and its raw fraction is not an unbiased estimate of performance across all events. A sample of 20 also has substantial uncertainty. Events marked missing from the platform, missing from the collection, or unsure are counted separately from found and missed-in-collection.
+
+### Evaluate an exported random set
+
+Summarize its saved original suggestions:
+
+```sh
+python -m evaluation.retrieval.evaluate_event_sample path/to/evaluation.csv
+```
+
+For another embedding run generated for the same Kalshi IDs, compare the saved labels with its top suggestions:
+
+```sh
+python -m evaluation.retrieval.evaluate_event_sample path/to/evaluation.csv --results data/embeddings/other-model.json
+```
+
+Run retrieval with `--query-id` for each of the sampled event IDs and `--top-k 10` or more. Keep the profile snapshot, candidate pool, category mappings, and representation fixed across models. The evaluator reports the saved run configuration and excludes events whose labeled targets are outside that run's candidate pool from that target-type hit-rate denominator; check pool sizes, membership and mappings independently. It reports likely-exact and possible judgments separately and counts at most one hit per Kalshi event per judgment type. Events with no reviewed labels of a given type do not enter its denominator. The labels came from the original model's suggestions, so these results are an exploratory comparison, not unbiased recall: review the other model's unique suggestions before drawing conclusions. Event-review CSVs do not yet record a match category for an event marked as in the collection but missed, so those cases are not treated as likely-exact or possible positives automatically.

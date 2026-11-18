@@ -4,6 +4,7 @@ from contextlib import closing
 import json
 import os
 import sqlite3
+import pandas as pd
 import tempfile
 from pathlib import Path
 
@@ -46,6 +47,12 @@ def build_report(input_path, output_path, snapshots, profiles):
                     candidate_title TEXT, candidate_category TEXT, score REAL NOT NULL,
                     PRIMARY KEY (event_uid, rank)
                 );
+                CREATE TABLE contracts (
+                    market_uid TEXT PRIMARY KEY, platform TEXT, event_uid TEXT,
+                    title TEXT, market_title TEXT, yes_means TEXT, rules TEXT,
+                    market_url TEXT, category TEXT, in_retrieval_pool INTEGER NOT NULL
+                );
+                CREATE INDEX contracts_event ON contracts(platform, event_uid);
                 CREATE INDEX matches_candidate ON matches(candidate_uid);
                 CREATE INDEX events_category_volume ON events(category, total_volume DESC);
             ''')
@@ -69,6 +76,22 @@ def build_report(input_path, output_path, snapshots, profiles):
                     db.execute('INSERT INTO matches VALUES (?, ?, ?, ?, ?, ?)',
                                (event['event_uid'], rank, uid, candidate.get('title'), candidate.get('category'), match['score']))
                 count += 1
+            query_ids = {row[0] for row in db.execute('SELECT event_uid FROM events')}
+            pool_ids = set(metadata.get('candidate_ids', []))
+            profiles_df = pd.read_parquet(profiles)
+            fields = ['market_uid', 'platform', 'event_uid', 'title', 'market_title', 'yes_means', 'rules', 'market_url', 'category']
+            for field in fields:
+                if field not in profiles_df:
+                    profiles_df[field] = None
+            rows = profiles_df[fields].astype(object).where(pd.notna(profiles_df[fields]), None)
+            def contract_rows():
+                for row in rows.itertuples(index=False, name=None):
+                    uid, platform, event = row[:3]
+                    if not uid or platform not in ('KALSHI', 'POLYUS'):
+                        continue
+                    included = event in (query_ids if platform == 'KALSHI' else pool_ids)
+                    yield (*row, int(included))
+            db.executemany('INSERT OR IGNORE INTO contracts VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', contract_rows())
         os.replace(temp, output)
     finally:
         if os.path.exists(temp): os.unlink(temp)
