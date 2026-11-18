@@ -8,7 +8,7 @@ import pandas as pd
 import tempfile
 from pathlib import Path
 
-from .batches import iter_results
+from .results import iter_results
 from .volume import event_volumes
 
 

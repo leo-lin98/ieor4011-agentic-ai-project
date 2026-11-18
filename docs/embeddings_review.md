@@ -1,6 +1,6 @@
 # Embeddings system: structure and technical debt
 
-This document describes the implementation in the repository as reviewed on November 17, 2026. It is an overview for planning cleanup, not a claim that retrieval quality has been validated.
+This is a historical review from November 17, 2026. Some workflows described below have since been changed or removed; see [the evaluation guide](../evaluation/retrieval/README.md) for the current files.
 
 ## Purpose and current state
 
@@ -44,7 +44,7 @@ Collector → market_profiles.parquet
 | File | Role |
 | --- | --- |
 | [README.md](../README.md) | Project setup and collector overview; describes the market profiles used as input. It does not currently introduce the embeddings workflow. |
-| [docs/embeddings_usage.md](embeddings_usage.md) | Practical commands, model access, cache behavior, review workflow, and evaluation instructions. Best starting point for running the system. |
+| [embeddings/README.md](../embeddings/README.md) | Practical commands, model access, and the basic review workflow. |
 | [docs/event_matching_plan.md](event_matching_plan.md) | Event-first design and intended phases, including representation comparison and review. Closest high-level description of the current architecture. |
 | [docs/embeddings_plan.md](embeddings_plan.md) | Earlier matching plan, evaluation rationale, and mapping proposals. Some details reflect an earlier market-level design, so compare it with the event-first plan and implementation. |
 | [embeddings/embed.py](../embeddings/embed.py) | Command-line entry point: selects events, loads the model, calls the cache and ranking code, and writes results and run metadata. |
@@ -52,10 +52,8 @@ Collector → market_profiles.parquet
 | [embeddings/cache.py](../embeddings/cache.py) | Generates and persists normalized vectors in a content-addressed SQLite cache. |
 | [embeddings/search.py](../embeddings/search.py) | Validates mappings, applies category and sports filters, and performs exact similarity ranking. |
 | [embeddings/config/categories.json](../embeddings/config/categories.json), [sports.json](../embeddings/config/sports.json) | Hand-maintained cross-platform category and sport mappings used by search. |
-| [embeddings/reporting/html.py](../embeddings/reporting/html.py), [review.js](../embeddings/reporting/review.js) | Produce the self-contained HTML review interface and manage browser-side labels and CSV import/export. |
-| [embeddings/reporting/batches.py](../embeddings/reporting/batches.py), [volume.py](../embeddings/reporting/volume.py), [volume_index.html](../embeddings/reporting/volume_index.html) | Split large outputs into review pages and optionally add a Kalshi volume index from pricing snapshots. |
-| [evaluation/retrieval/evaluate.py](../evaluation/retrieval/evaluate.py), [cases.csv](../evaluation/retrieval/cases.csv) | Evaluate labeled event pairs against full eligible rankings; the CSV is currently empty. |
-| [evaluation/retrieval/contracts.py](../evaluation/retrieval/contracts.py), [contract_cases.csv](../evaluation/retrieval/contract_cases.csv) | Evaluate a separate string-similarity baseline for contracts within displayed event pairs; the CSV is currently empty. |
+| [embeddings/reporting/browser.py](../embeddings/reporting/browser.py), [database.py](../embeddings/reporting/database.py) | Serve the local results browser and build its report database. |
+| [evaluation/retrieval/README.md](../evaluation/retrieval/README.md) | Current evaluation data, scripts, and saved results. |
 | [tests/test_embeddings.py](../tests/test_embeddings.py), [tests/test_volume.py](../tests/test_volume.py) | Small unit-test suite for grouping, caching, filtering, ranking, reporting, evaluation, and volume aggregation. |
 
 Generated caches and reports normally live in `data/embeddings/`, which is ignored by Git. The checked-in profiles are a snapshot, so results describe that data rather than necessarily current markets.

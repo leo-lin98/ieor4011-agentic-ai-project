@@ -4,7 +4,7 @@ from collections import Counter
 import csv
 import json
 
-from embeddings.reporting.batches import iter_results
+from embeddings.reporting.results import iter_results
 
 
 def load_cases(path):

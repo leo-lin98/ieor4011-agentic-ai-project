@@ -86,7 +86,7 @@ def main():
     parser.add_argument('--reviews', default='evaluation/retrieval/combined_event_evaluation.csv')
     parser.add_argument('--profiles', default='data/embeddings/evaluation-profile-snapshot.parquet')
     parser.add_argument('--cache', default='data/embeddings/events.sqlite3')
-    parser.add_argument('--output', default='evaluation/retrieval/expanded_sample_results.json')
+    parser.add_argument('--output', default='evaluation/retrieval/results/expanded_sample_results.json')
     parser.add_argument('--device', default='cpu')
     args = parser.parse_args()
     run(args.reviews, args.profiles, args.cache, args.output, args.device)

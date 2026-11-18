@@ -1,7 +1,11 @@
-# Kalshi × Polymarket US arbitrage: data collector
+# Kalshi × Polymarket US: data collection and event matching
 
 Collects the tables defined in [DECISIONS.md](DECISIONS.md) into `data/` as Parquet files.
 Market-data endpoints on both platforms are public, so no API keys are needed.
+
+## Event matching
+
+See the [event matching guide](embeddings/README.md) for the approach, commands, and evaluation results.
 
 ## Setup
 

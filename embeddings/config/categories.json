@@ -1,11 +1,17 @@
 {
-  "sports": ["sports", "culture"],
-  "politics": ["politics", "geopolitics", "macro", "finance", "technology", "climate", "science", "culture"],
-  "elections": ["politics", "geopolitics", "macro", "finance", "culture"],
-  "financials": ["finance", "macro", "technology", "crypto", "politics"],
-  "economics": ["macro", "finance", "politics", "geopolitics", "climate"],
-  "entertainment": ["culture", "sports", "politics", "technology"],
-  "science and technology": ["science", "technology", "climate", "finance", "politics", "crypto"],
-  "climate and weather": ["climate", "science", "macro", "politics", "geopolitics"],
-  "crypto": ["crypto", "finance", "technology", "macro", "politics"]
+  "kalshi": {
+    "sports": ["sports"],
+    "non-sports": [
+      "politics", "elections", "financials", "economics", "entertainment",
+      "science and technology", "climate and weather", "crypto", "mentions",
+      "commodities", "companies", "business", "social"
+    ]
+  },
+  "polyus": {
+    "sports": ["sports"],
+    "non-sports": [
+      "politics", "geopolitics", "macro", "finance", "technology", "climate",
+      "science", "culture", "crypto"
+    ]
+  }
 }

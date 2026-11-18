@@ -5,8 +5,6 @@ import numpy as np
 from embeddings.prepare import build_events, event_text
 from embeddings.cache import embed_events
 from embeddings.search import configs, eligible, rank, sport
-from embeddings.reporting.html import render
-from evaluation.retrieval.evaluate import evaluate
 
 class Model:
     def __init__(self): self.calls = 0
@@ -41,6 +39,13 @@ class RetrievalTests(unittest.TestCase):
         self.assertTrue(eligible(q, {'category':None}, c, s))
         self.assertTrue(eligible({'category':None}, {'category':'politics'}, c, s))
         self.assertEqual(rank({}, [{}, {}], np.array([1.,0.]), np.array([[0.,1.],[1.,0.]]), 2, c, s)[0][0], 1)
+    def test_sports_and_non_sports_categories(self):
+        c, s, _ = configs()
+        self.assertFalse(eligible({'category': 'Sports'}, {'category': 'culture'}, c, s))
+        self.assertFalse(eligible({'category': 'Entertainment'}, {'category': 'sports'}, c, s))
+        self.assertTrue(eligible({'category': 'Entertainment'}, {'category': 'finance'}, c, s))
+        self.assertTrue(eligible({'category': 'Sports'}, {'category': 'new category'}, c, s))
+        self.assertTrue(eligible({'category': 'new category'}, {'category': 'sports'}, c, s))
     def test_expanded_sports_mapping(self):
         c, s, _ = configs()
         self.assertTrue(eligible({'category': 'sports', 'tags': ['Golf']},
@@ -52,12 +57,4 @@ class RetrievalTests(unittest.TestCase):
         self.assertIsNone(sport({'subcategory': 'EFOOTBALL', 'tags': ['Football']}, s, 'POLYUS'))
         self.assertTrue(eligible({'category': 'sports', 'tags': ['Boxing']},
                                  {'category': 'sports', 'subcategory': 'COMBAT'}, c, s))
-    def test_evaluation_and_report(self):
-        events, _ = build_events(self.rows)
-        data = {'metadata': {'candidate_ids':['p']}, 'results':[{'query':events[0], 'candidates':[{'event':events[1], 'score':.9}], 'ranked_candidate_ids':['p'], 'excluded_candidate_ids':[]}]}
-        cases = [{'kalshi_uid':'k','polyus_uid':'p','relationship':'matching','split':'test'}]
-        self.assertEqual(evaluate(data, cases)['test']['recall_at_5'], 1)
-        data['results'][0]['ranked_candidate_ids'] = []; data['results'][0]['excluded_candidate_ids'] = ['p']
-        self.assertTrue(evaluate(data, cases)['test']['examples'][0]['excluded_by_filter'])
-        html = render(data); self.assertIn('Event similarity', html); self.assertIn('Full rules', html)
 if __name__ == '__main__': unittest.main()

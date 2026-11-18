@@ -18,11 +18,25 @@ def configs():
     # Validate and normalize the platform mappings; hash them for reproducibility.
     raw = [(CONFIG / f).read_bytes() for f in ("categories.json", "sports.json")]
     categories, sports = (json.loads(x) for x in raw)
-    if not isinstance(categories, dict) or not all(isinstance(k, str) and isinstance(v, list) and v and all(isinstance(x, str) and norm(x) for x in v) for k, v in categories.items()):
-        raise ValueError("Invalid category mapping")
+    if not isinstance(categories, dict) or set(categories) != {"kalshi", "polyus"}:
+        raise ValueError("Invalid category groups")
+    category_groups = {}
+    for platform, groups in categories.items():
+        if not isinstance(groups, dict) or set(groups) != {"sports", "non-sports"}:
+            raise ValueError("Invalid category groups")
+        lookup = {}
+        for group, values in groups.items():
+            if not isinstance(values, list) or not values or not all(isinstance(x, str) and norm(x) for x in values):
+                raise ValueError("Invalid category groups")
+            for value in values:
+                category = norm(value)
+                if category in lookup:
+                    raise ValueError("Category appears in more than one group")
+                lookup[category] = group
+        category_groups[platform] = lookup
     if not isinstance(sports, dict) or set(sports) != {"kalshi_tags", "polyus_tags", "polyus_subcategories"} or not all(isinstance(m, dict) and all(isinstance(k, str) and norm(k) and isinstance(v, str) and norm(v) for k, v in m.items()) for m in sports.values()):
         raise ValueError("Invalid sports mapping")
-    return ({norm(k): [norm(x) for x in v] for k, v in categories.items()},
+    return (category_groups,
             {s: {norm(k): norm(v) for k, v in m.items()} for s, m in sports.items()},
             hashlib.sha256(b"\0".join(raw)).hexdigest())
 
@@ -46,12 +60,11 @@ def sport(row, mappings, platform):
 
 def eligible(query, candidate, categories, sports):
     # Exclude known category or sport conflicts while retaining uncertain cases.
-    allowed = categories.get(norm(query.get("category")))
-    category = norm(candidate.get("category"))
-    known = {c for values in categories.values() for c in values}
-    if allowed and category in known and category not in allowed:
+    query_group = categories["kalshi"].get(norm(query.get("category")))
+    candidate_group = categories["polyus"].get(norm(candidate.get("category")))
+    if query_group and candidate_group and query_group != candidate_group:
         return False
-    if norm(query.get("category")) == "sports" and category == "sports":
+    if query_group == "sports" and candidate_group == "sports":
         a, b = sport(query, sports, "KALSHI"), sport(candidate, sports, "POLYUS")
         if a and b and a != b: return False
     return True
