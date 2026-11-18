@@ -11,7 +11,7 @@ import html
 import json
 from pathlib import Path
 from datetime import datetime, timezone
-from .report import render
+from .html import render
 
 def iter_results(path):
     # Decode one result at a time so large retrieval files need not fit in memory.

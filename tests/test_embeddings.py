@@ -5,7 +5,7 @@ import numpy as np
 from embeddings.prepare import build_events, event_text
 from embeddings.cache import embed_events
 from embeddings.search import configs, eligible, rank, sport
-from embeddings.report import render
+from embeddings.reporting.html import render
 from evaluation.retrieval.evaluate import evaluate
 
 class Model:

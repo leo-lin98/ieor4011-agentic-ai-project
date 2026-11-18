@@ -2,7 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 import pandas as pd
-from embeddings.volume import event_volumes
+from embeddings.reporting.volume import event_volumes
 
 class VolumeTests(unittest.TestCase):
     def test_latest_market_values_and_missing(self):

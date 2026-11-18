@@ -1,12 +1,13 @@
 """Build a queryable SQLite report from saved embedding results and snapshots."""
 import argparse
+from contextlib import closing
 import json
 import os
 import sqlite3
 import tempfile
 from pathlib import Path
 
-from .report_batches import iter_results
+from .batches import iter_results
 from .volume import event_volumes
 
 
@@ -15,6 +16,14 @@ def build_report(input_path, output_path, snapshots, profiles):
     source, output = Path(input_path).resolve(), Path(output_path).resolve()
     if output == source or output == Path(profiles).resolve():
         raise ValueError('Report database must be separate from input files')
+    if output.exists():
+        try:
+            with closing(sqlite3.connect(f'{output.as_uri()}?mode=ro', uri=True)) as existing:
+                marker = existing.execute("SELECT value FROM run_metadata WHERE key='retrieval_input'").fetchone()
+        except sqlite3.DatabaseError as exc:
+            raise ValueError('Output exists and is not a reporting database') from exc
+        if not marker:
+            raise ValueError('Output exists and is not a reporting database')
     volumes, snapshot_ms = event_volumes(snapshots, profiles)
     results = iter_results(source)
     metadata = next(results)
@@ -23,7 +32,7 @@ def build_report(input_path, output_path, snapshots, profiles):
     fd, temp = tempfile.mkstemp(prefix='.report-', suffix='.sqlite3', dir=output.parent)
     os.close(fd)
     try:
-        with sqlite3.connect(temp) as db:
+        with closing(sqlite3.connect(temp)) as db, db:
             db.executescript('''
                 CREATE TABLE run_metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL);
                 CREATE TABLE events (

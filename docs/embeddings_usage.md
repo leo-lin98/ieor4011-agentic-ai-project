@@ -5,7 +5,7 @@ Install `pip install -r requirements.txt`, accept the terms for `google/embeddin
 ```sh
 python -m unittest discover -s tests -v
 python -m embeddings.embed --queries 10 --top-k 10 --revision main --representation title
-python -m embeddings.report data/embeddings/candidates.json data/embeddings/report.html
+python -m embeddings.reporting.html data/embeddings/candidates.json data/embeddings/report.html
 python -m embeddings.embed --queries 10 --top-k 10 --revision main --representation title_options --output data/embeddings/options.json
 ```
 
@@ -30,14 +30,14 @@ Each candidate card has a review selector and notes. The Kalshi card also has a 
 
 The browser saves reviews locally, subject to its storage settings and its handling of `file:` pages. Download the reviews CSV as a backup. Use Import reviews CSV to merge a previous export into another report page; existing reviews take precedence when a pair appears in both. The export is not written automatically into `evaluation/retrieval/cases.csv`; move or merge it there when ready. `no_match_found` rows are notes and do not count toward recall. Reviews and exports may be lost if browser storage is cleared, so export regularly.
 
-For the compact full-run output, render manageable ranges using `python -m embeddings.report_batches data/embeddings/full-candidates.json data/embeddings/review-101 --start 101 --limit 100`. Import the previous CSV before reviewing another page, then download an updated CSV to carry your reviews forward.
+For the compact full-run output, render manageable ranges using `python -m embeddings.reporting.batches data/embeddings/full-candidates.json data/embeddings/review-101 --start 101 --limit 100`. Import the previous CSV before reviewing another page, then download an updated CSV to carry your reviews forward.
 
 ## Querying results by category and volume
 
 Build a separate SQLite report from an existing retrieval run; this does not load the model or change the vector cache:
 
 ```sh
-python -m embeddings.report_db data/embeddings/full-candidates.json data/embeddings/report.sqlite3 \
+python -m embeddings.reporting.database data/embeddings/full-candidates.json data/embeddings/report.sqlite3 \
   --volume-snapshots data/pricing_snapshots/KALSHI
 sqlite3 -header -column data/embeddings/report.sqlite3
 ```
@@ -57,3 +57,13 @@ LIMIT 50;
 ```
 
 `events` contains the Kalshi queries actually included in that retrieval run; `matches` contains its displayed candidates in similarity order (not the entire eligible pool). Join without the rank condition to see all of them. Category is the saved profile classification; missing or conflicting classifications are excluded by the example, rather than assumed to be non-sports. Volume is the sum of each event's latest saved per-market Kalshi total contract count, not dollar volume or 24-hour volume. `markets_with_volume` and `market_count` reveal partial totals; missing volume is NULL. Different markets may have observations from different times. The latest timestamp across the snapshot files and the source paths are in `run_metadata`. Rebuild the report to pick up a newer retrieval run or snapshots; rebuilding replaces the report database.
+
+## Browse the report in a web browser
+
+After building the SQLite report, start the local read-only explorer from the project directory:
+
+```sh
+python -m embeddings.reporting.browser
+```
+
+Open <http://127.0.0.1:8765/>. Choose a category, search, set a minimum volume, and sort the results; select **View candidates** to see the saved matches for an event. The default non-sports filter excludes unclassified events; select **Unclassified** or **All categories** to include them. The server only listens on this computer. Stop it with Ctrl+C. Pass a different report path as the first argument or use `--port 8766` if the default port is occupied. The explorer reads the current report database, so rebuild it when you want newer retrieval results or snapshots.
