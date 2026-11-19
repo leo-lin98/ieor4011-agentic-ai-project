@@ -1,8 +1,9 @@
 .venv/
+.venv-elephant/
 .env
 __pycache__/
 .DS_Store
-Data/raw/*.json
-Data/raw/*.csv
-Data/processed/
 .Arbitrage/
+# Collector snapshots, logs, and generated embeddings stay local.
+data/*
+!data/display/
