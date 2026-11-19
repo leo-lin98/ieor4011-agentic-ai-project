@@ -180,11 +180,11 @@ def main():
     s.add_argument('--seed', type=int, default=42)
     s.add_argument('--category', default='all')
     s.add_argument('--output', help='Optional JSON backup of the sample')
-    s.add_argument('--classification-database', default='data/classification.sqlite3')
+    s.add_argument('--classification-database', default='data/propose/classification.sqlite3')
     s.add_argument('--preview', action='store_true')
     r = sub.add_parser('run')
     r.add_argument('manifest', nargs='?')
-    r.add_argument('--database', default='data/classification.sqlite3')
+    r.add_argument('--database', default='data/propose/classification.sqlite3')
     r.add_argument('--resume')
     r.add_argument('--sample')
     r.add_argument('--force', action='store_true')
@@ -196,7 +196,7 @@ def main():
     r.add_argument('--retry-failed', action='store_true')
     m = sub.add_parser('import')
     m.add_argument('sources', nargs='+')
-    m.add_argument('--database', default='data/classification.sqlite3')
+    m.add_argument('--database', default='data/propose/classification.sqlite3')
     args = p.parse_args()
     try:
         if args.command == 'select':

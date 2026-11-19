@@ -1,6 +1,6 @@
 """Database-backed review and conservative scoring."""
 import json
-from . import storage
+from propose.classification import storage
 
 def run_view(db, run_id):
     run = db.execute('SELECT * FROM runs WHERE id=?', (run_id,)).fetchone()

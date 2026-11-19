@@ -5,7 +5,7 @@ import sqlite3
 import uuid
 from pathlib import Path
 
-DEFAULT_DB = 'data/classification.sqlite3'
+DEFAULT_DB = 'data/propose/classification.sqlite3'
 
 def canonical(value):
     return json.dumps(value, sort_keys=True, ensure_ascii=False, separators=(',', ':'))

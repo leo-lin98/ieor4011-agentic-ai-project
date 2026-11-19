@@ -1,12 +1,13 @@
 # Classification workflow
 
-The source of truth is `data/classification.sqlite3`. The database is initialized and migrated automatically on first use; SQLite foreign keys are enabled on every connection. Install `requirements.txt` in the project environment and set `OPENAI_API_KEY` in `.env` before making requests. Data under `data/` is ignored by Git.
+The source of truth is `data/propose/classification.sqlite3`. The database is initialized and migrated automatically on first use; SQLite foreign keys are enabled on every connection. Install `requirements.txt` in the project environment and set `OPENAI_API_KEY` in `.env` before making requests. Data under `data/` is ignored by Git.
 
 ## Import and reconciliation
 
-Original JSON files remain untouched. Import runs, manifests, and exported browser reviews with:
+The original project JSON files are retained in `data/archive/classification-json-sources.zip`. Extract them before reimporting them into a new database. Import runs, manifests, and exported browser reviews with:
 
 ```sh
+unzip data/archive/classification-json-sources.zip -d data/propose
 python -m propose.classification import data/propose/*.json ~/Downloads/classification-reviews*.json > reconciliation.json
 ```
 
@@ -24,6 +25,8 @@ Selection prints a sample ID and stores the complete manifest in SQLite. Add `--
 
 ## Review and reporting
 
+The review and scoring code lives in `evaluation/propose/classification/` and uses the same classification database.
+
 ```sh
 python -m embeddings.reporting.browser
 ```
@@ -34,4 +37,4 @@ Accuracy and the confusion matrix include successful predictions with an explici
 
 ## Backup
 
-Stop writers before copying the database, or use SQLite's backup API for a consistent live backup. Back up `data/classification.sqlite3` together with the original JSON sources; copying browser storage is not necessary for reviews saved in the new interface. Use `--database` on `run` and `import`, `--classification-database` on `select` and the report browser, to work with an alternate database.
+Stop writers before copying the database, or use SQLite's backup API for a consistent live backup. Back up `data/propose/classification.sqlite3` together with the archived original JSON sources; copying browser storage is not necessary for reviews saved in the new interface. Use `--database` on `run` and `import`, `--classification-database` on `select` and the report browser, to work with an alternate database.

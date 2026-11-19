@@ -4,7 +4,8 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
-from propose.classification import storage, review
+from propose.classification import storage
+from evaluation.propose.classification import review
 from propose.classification.__main__ import run_database
 
 class DatabaseTest(unittest.TestCase):
