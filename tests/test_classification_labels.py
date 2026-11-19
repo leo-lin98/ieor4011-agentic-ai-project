@@ -6,7 +6,7 @@ from types import SimpleNamespace
 from unittest import TestCase
 from unittest.mock import patch
 
-from evaluation.classification import __main__ as classifier
+from propose.classification import __main__ as classifier
 
 
 class ClassificationLabelsTest(TestCase):

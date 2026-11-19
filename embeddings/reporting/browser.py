@@ -104,7 +104,7 @@ def sample_events(db, seed, method='volume', category='non-sports', size=20):
             'snapshot_ms': json.loads(snapshot[0]) if snapshot else None, 'events': selected}
 
 
-def handler_for(database):
+def handler_for(database, classification_database="data/classification.sqlite3"):
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
             parsed = urlsplit(self.path)
@@ -117,6 +117,15 @@ def handler_for(database):
                     asset = Path(__file__).with_name(parsed.path[1:])
                     kind = 'text/css; charset=utf-8' if parsed.path.endswith('.css') else 'text/javascript; charset=utf-8'
                     self.respond(200, asset.read_bytes(), kind)
+                    return
+                if parsed.path in ('/api/classification/runs', '/api/classification/run'):
+                    from propose.classification import storage, review
+                    with closing(storage.connect(classification_database)) as cdb:
+                        if parsed.path.endswith('/runs'):
+                            result = {'runs': [dict(r) for r in cdb.execute('SELECT id,created_at,provenance FROM runs ORDER BY rowid DESC')]}
+                        else:
+                            result = review.run_view(cdb, parse_qs(parsed.query).get('id', [''])[0])
+                    self.respond(200, json.dumps(result, allow_nan=False).encode(), 'application/json; charset=utf-8')
                     return
                 with closing(connect(database)) as db:
                     params = parse_qs(parsed.query, keep_blank_values=True)
@@ -183,6 +192,24 @@ def handler_for(database):
             except (sqlite3.Error, OSError):
                 self.respond(500, b'{"error":"Could not read the reporting database"}', 'application/json; charset=utf-8')
 
+        def do_POST(self):
+            if urlsplit(self.path).path != '/api/classification/review':
+                self.respond(404, b'Not found', 'text/plain'); return
+            origin = self.headers.get('Origin')
+            if origin and origin not in (f'http://127.0.0.1:{self.server.server_port}', f'http://localhost:{self.server.server_port}'):
+                self.respond(403, b'Forbidden', 'text/plain'); return
+            try:
+                if self.headers.get_content_type() != 'application/json': raise ValueError('Expected JSON')
+                length = int(self.headers.get('Content-Length', '0'))
+                if length < 1 or length > 65536: raise ValueError('Invalid request size')
+                data = json.loads(self.rfile.read(length))
+                from propose.classification import storage, review
+                with closing(storage.connect(classification_database)) as db:
+                    with db: review.save_review(db, data['run_id'], int(data['pair_id']), data['label'], str(data.get('note', '')))
+                self.respond(200, b'{"ok":true}', 'application/json')
+            except (ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
+                self.respond(400, json.dumps({'error':str(exc)}).encode(), 'application/json')
+
         def respond(self, status, data, content_type):
             self.send_response(status)
             self.send_header('Content-Type', content_type)
@@ -198,6 +225,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('database', nargs='?', default='data/embeddings/report.sqlite3')
     parser.add_argument('--port', type=int, default=8765)
+    parser.add_argument('--classification-database', default='data/classification.sqlite3')
     args = parser.parse_args()
     if not Path(args.database).is_file():
         parser.error(f'Report database not found: {args.database}. Build it with python -m embeddings.reporting.database first.')
@@ -207,7 +235,7 @@ def main():
             db.execute('SELECT event_uid FROM matches LIMIT 1')
         except sqlite3.Error as exc:
             parser.error(f'Not a valid reporting database: {exc}')
-    server = ThreadingHTTPServer(('127.0.0.1', args.port), handler_for(args.database))
+    server = ThreadingHTTPServer(('127.0.0.1', args.port), handler_for(args.database, args.classification_database))
     print(f'Open http://127.0.0.1:{server.server_port}/ (press Ctrl+C to stop)', flush=True)
     try:
         server.serve_forever()
