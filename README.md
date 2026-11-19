@@ -84,7 +84,7 @@ Compare the settlement conditions before marking a pair **Match** or **No
 match**. Use the Polymarket US ID lookup to review a pair outside the top 10.
 A match means the conditions permit an arbitrage payoff at suitable prices.
 Order books and fees are checked separately. Review decisions are shared in
-`review/embeddings/reviews.sqlite`.
+`evaluation/retrieval/reviews.sqlite`, alongside the review and evaluation code.
 
 In **Benchmarks**, create and select a set. Save each verified pair as a match
 and use **Add to benchmark** to include it. Mark pairs you found independently

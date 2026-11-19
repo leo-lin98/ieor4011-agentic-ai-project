@@ -5,8 +5,11 @@ import json
 import sqlite3
 from contextlib import closing, contextmanager
 from datetime import UTC, datetime
+from pathlib import Path
 
 from embeddings.catalog import rule_fingerprint
+
+DEFAULT_DB = Path(__file__).resolve().with_name("reviews.sqlite")
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS reviews (

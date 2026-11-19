@@ -6,8 +6,9 @@ import logging
 import sqlite3
 from pathlib import Path
 
-from collector.config import DATA, ROOT
+from collector.config import DATA
 from evaluation.retrieval.evaluate import evaluate
+from evaluation.retrieval.reviews import DEFAULT_DB
 
 from .run import Run, create_run
 
@@ -15,7 +16,7 @@ from .run import Run, create_run
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--runs-dir", type=Path, default=DATA / "embeddings" / "runs")
-    parser.add_argument("--reviews-db", type=Path, default=ROOT / "review" / "embeddings" / "reviews.sqlite")
+    parser.add_argument("--reviews-db", type=Path, default=DEFAULT_DB)
     commands = parser.add_subparsers(dest="command", required=True)
     retrieve = commands.add_parser("run", help="Freeze catalogs and retrieve candidates")
     retrieve.add_argument("--run-id")

@@ -32,7 +32,7 @@ embeddings/                       # Input preparation, retrieval, and evaluation
 data/embeddings/runs/run-001/     # Local run artifacts
 ├── metadata.json
 └── candidates.parquet
-review/embeddings/                # Reviewer and shared labels
+evaluation/retrieval/             # Review, evaluation, and shared labels
 └── reviews.sqlite
 ```
 
@@ -40,7 +40,7 @@ Each run has its own folder. `metadata.json` records the run ID and creation tim
 
 `candidates.parquet` contains one row per Kalshi–Polymarket US pair in that run, with `run_id`, `kalshi_market_uid`, `polyus_market_uid`, and `similarity_score`. The `run_id` remains with each row if files are copied or combined; validate that it matches the run ID in `metadata.json` and the folder name. Keep the Parquet file and metadata together so the run configuration remains available. A market can appear in multiple pairs; do not impose a one-to-one constraint.
 
-Commit `review/embeddings/reviews.sqlite` to share labels. Key decisions by the two market UIDs and store the label, review timestamp, optional note, and rule fingerprints for both markets. A `match` means the contracts' settlement rules permit an arbitrage payoff at suitable prices. A `no_match` means the pair doesn't support that payoff. The pricing step uses current order books and fees to check executability. Leave uncertain pairs unreviewed. Carry labels forward when the same pair appears again and flag changed rules for re-review.
+Commit `evaluation/retrieval/reviews.sqlite` to share labels and frozen benchmarks. Key decisions by the two market UIDs and store the label, review timestamp, and rule fingerprints for both markets. A `match` means the contracts' settlement rules permit an arbitrage payoff at suitable prices. A `no_match` means the pair doesn't support that payoff. The pricing step uses current order books and fees to check executability. Leave uncertain pairs unreviewed. Carry labels forward when the same pair appears again and flag changed rules for re-review.
 
 Show one Kalshi contract at a time with its top 10 Polymarket US results and their scores. Join against the selected run's catalog snapshot to show titles, outcomes, complete settlement rules, clickable links, and exact contract IDs. Label series-level and event-level links accordingly. Allow reviewers to look up and save missed matches by contract ID.
 
