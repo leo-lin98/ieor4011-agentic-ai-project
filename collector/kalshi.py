@@ -3,6 +3,9 @@
 Pricing and catalog both come from GET /events?status=open&with_nested_markets=true
 (multivariate/combo events are excluded by this endpoint), so one sweep feeds both.
 """
+import re
+from datetime import datetime, timezone
+
 from .util import b, cents, flip, iso_ms, js, num, s, sha
 
 PLATFORM = "KALSHI"
@@ -51,6 +54,35 @@ async def iter_open_event_pages(api, priority=1):
             return
 
 
+async def fetch_milestones(api, min_ms, max_ms, priority=2):
+    """Sports milestones (one per game) starting in [min_ms, max_ms].
+
+    Returns {event_ticker: {"start_ms", "game_id", "title"}} for every event a milestone lists in
+    related_event_tickers (a game's winner, spread, total, prop events ...). start_date is the scheduled start,
+    the time Kalshi shows on the game; Kalshi event tickers carry only the date for some sports (e.g. football).
+    """
+    out, cursor = {}, None
+    params = {"category": "Sports", "limit": 200,
+              "minimum_start_date": datetime.fromtimestamp(min_ms / 1000, timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}
+    while True:
+        if cursor:
+            params["cursor"] = cursor
+        r = await api.get("/milestones", params=params, priority=priority)
+        d = r.data or {}
+        ms = d.get("milestones") or []
+        for m in ms:
+            start = iso_ms(m.get("start_date"))
+            if start is None or start > max_ms:
+                continue
+            info = {"start_ms": start, "game_id": s(m.get("id")), "title": s(m.get("title"))}
+            for t in (m.get("related_event_tickers") or []) + (m.get("primary_event_tickers") or []):
+                out.setdefault(t, info)
+        cursor = d.get("cursor")
+        last = iso_ms(ms[-1].get("start_date")) if ms else None
+        if not cursor or not ms or (last is not None and last > max_ms):
+            return out
+
+
 def _tick_size_c(m):
     steps = [num(p.get("step")) for p in m.get("price_ranges") or [] if isinstance(p, dict)]
     steps = [x for x in steps if x]
@@ -79,10 +111,22 @@ def pricing_row(e, m, ser, tick_ts, resp):
     }
 
 
-def catalog_row(e, m, ser, pulled_ms):
+def _team_code(m):
+    """Team code for team-specific markets: the ticker suffix without its line digits (…-TB4 -> TB)."""
+    cs = m.get("custom_strike")
+    if not (isinstance(cs, dict) and any(k.endswith("_team") for k in cs)):
+        return None
+    suffix = (m.get("ticker") or "").rsplit("-", 1)[-1]
+    return re.sub(r"\d+$", "", suffix) or None
+
+
+def catalog_row(e, m, ser, pulled_ms, games=None):
+    """games: fetch_milestones() output; sets game_start_ms / game_id for events that belong to a game."""
     ser = ser or {}
+    game = (games or {}).get(e.get("event_ticker")) or {}
     st = m.get("status")
     series_ticker = e.get("series_ticker")
+    pm = e.get("product_metadata") or {}
     row = {
         "market_uid": uid(m.get("ticker")), "event_uid": f"KALSHI:{e.get('event_ticker')}", "platform": PLATFORM,
         "native_market_id": s(m.get("ticker")), "native_event_id": s(e.get("event_ticker")),
@@ -95,6 +139,10 @@ def catalog_row(e, m, ser, pulled_ms):
         "market_type": s(m.get("market_type")),
         "category": s(ser.get("category") or e.get("category")), "subcategory": None,
         "tags": js(ser.get("tags")),
+        "competition": s(pm.get("competition")), "competition_scope": s(pm.get("competition_scope")),
+        "sports_market_type": None, "line": None,
+        "yes_team_code": _team_code(m), "no_team_code": None, "event_teams": None,
+        "game_id": game.get("game_id"),
         "mutually_exclusive": b(e.get("mutually_exclusive")),
         "collateral_return_type": s(e.get("collateral_return_type")),
         "strike_type": s(m.get("strike_type")), "floor_strike": num(m.get("floor_strike")),
@@ -103,7 +151,7 @@ def catalog_row(e, m, ser, pulled_ms):
         "open_time_ms": iso_ms(m.get("open_time")), "close_time_ms": iso_ms(m.get("close_time")),
         "expected_expiration_ms": iso_ms(m.get("expected_expiration_time")),
         "latest_expiration_ms": iso_ms(m.get("latest_expiration_time")),
-        "occurrence_ms": iso_ms(m.get("occurrence_datetime")), "game_start_ms": None,
+        "occurrence_ms": iso_ms(m.get("occurrence_datetime")), "game_start_ms": game.get("start_ms"),
         "settlement_ts_ms": iso_ms(m.get("settlement_ts")),
         "created_time_ms": iso_ms(m.get("created_time")), "updated_time_ms": iso_ms(m.get("updated_time")),
         "event_start_ms": None, "event_end_ms": None, "event_closed_time_ms": None,

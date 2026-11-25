@@ -257,6 +257,26 @@ This is speed arbitrage, so timestamps measure staleness, not just log time.
 
 ---
 
+## D10. Candidate generation (added 2026-11-17)
+
+Narrow Kalshi × Polymarket US down to likely-identical pairs before any LLM call. Code in `candidates/`, one folder per category and, for sports, one per sport. Each subcategory documents its filters in its own `FILTERING.md`.
+
+- **Scope, sports:** 12 sports kept (football, basketball, soccer, hockey, golf, baseball, motorsport, esports, tennis, MMA, boxing, table tennis). Dropped: chess, rugby, cricket, darts, volleyball, lacrosse, Kalshi "Other", pickleball. Label mapping in `candidates/sports/sport_map.py` and `SUBCATEGORIES.md`.
+- **Events first, then markets.** Events are paired on a structured key (season for futures; teams + scheduled start for games), then markets inside them on player, team code or team name, plus direction (same or opposite side).
+- **Each sport has its own code** in `candidates/sports/<sport>/`, written for that sport's markets. Nothing is shared across sports except loading, name normalisation, rules templates and output writing (`candidates/common.py`).
+- **No game or market is hard-coded.** Each sport's `config.py` names its leagues, every bet type on each platform, and its futures series. Seasons, dates, teams, players and lines are read from the data. Anything the config does not recognise is reported by name and count, never dropped silently. Match on tickers, slugs and structured fields, never titles.
+- **T1 gained bet-type fields (2026-11-17):** `competition`, `competition_scope` (Kalshi event `product_metadata`), `sports_market_type`, `line` (Polymarket US), `yes_team_code`, `no_team_code`, `event_teams`. Catalogs pulled before this lack them. The first refresh after the change rewrites every row into catalog history once, because the content hash includes the new fields.
+- **The LLM reviews rules templates, not markets.** Rules text is reduced to a template (names, dates, numbers removed). Each Kalshi × Polymarket US template pair is reviewed once; approved pairs make every matching market pair `auto_confirmed`. Changed wording means a new template, so the pair goes back to review.
+- **T7 `candidate_pairs`** is written to `data/candidate_pairs/<category>/<subcategory>/` with `pair_id` in the T2 format, `match_key`, `direction`, `template_pair_id` and `status`.
+- **Close window (2026-11-17):** only pairs whose earlier close is within 7 days of the run. Kalshi `close_time`; Polymarket US event end (the market `endDate` is padded ~2 weeks).
+- **Kalshi game start times:** sports milestones (`GET /milestones`), pulled with each catalog refresh into T1 `game_start_ms` and `game_id`. Football tickers carry only the date.
+- **Football** is split into `football/nfl/` and `football/cfb/` (`candidates/sports/football/FILTERING.md`). Nov 25 catalog, 7-day window: NFL 16/16 games, 6,301 pairs / 75 template pairs; college 76 games, 5,477 / 82.
+- **Basketball** (`candidates/sports/basketball/FILTERING.md`): NBA only (`basketball/nba/`), same layout as football. Nov 25: 30/30 Kalshi games, 6,288 pairs / 86 template pairs, mostly player lines.
+- **Scope decision (2026-11-25):** NFL and NBA only until the end-to-end path (template review → T2 → books → edge) works. Other sports and leagues stay in the "Not covered" report.
+- **Baseball** (`candidates/sports/baseball/FILTERING.md`): futures by season + player/team; games by league + scheduled start + teams, then (period, bet, team, line) for winner, run line, totals, team totals, first 5 innings, single innings, first-inning run, extra innings. Verified on the 2026 World Series Game 5 (`selftest.py`).
+
+---
+
 ## Open items (to verify before or during build)
 
 - [x] Polymarket US max page size: 500. The book has an exchange timestamp (`transactTime`). BBO path: `/v1/markets/{slug}/bbo`.

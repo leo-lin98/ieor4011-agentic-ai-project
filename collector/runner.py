@@ -6,8 +6,8 @@ import time
 from . import flags as flagstore
 from . import kalshi, polyus
 from .config import (BOOK_INTERVAL_S, CATALOG_INTERVAL_S, HEARTBEAT_S, KALSHI_BASE, KALSHI_RATE,
-                     POLYUS_BASE, POLYUS_RATE, POLYUS_STATS_SWEEP_RPS, RAW_ARCHIVE_DAILY, STATS_FLUSH_S,
-                     PRICE_INTERVAL_S)
+                     MILESTONE_LOOKAHEAD_D, MILESTONE_LOOKBACK_H, POLYUS_BASE, POLYUS_RATE,
+                     POLYUS_STATS_SWEEP_RPS, RAW_ARCHIVE_DAILY, STATS_FLUSH_S, PRICE_INTERVAL_S)
 from .http import AdaptiveLimiter, Api
 from .profiles import build_profiles
 from .schemas import MARKET_STATS, ORDERBOOK_SNAPSHOTS, PLATFORM_COUNTS, PRICING_SNAPSHOTS
@@ -106,6 +106,14 @@ class Collector:
         sink = ParquetSink(tick_path("pricing_snapshots", "KALSHI", tick_ts, "pricing"), PRICING_SNAPSHOTS)
         cw = CatalogWriter("KALSHI", tick_ts) if with_catalog else None
         raw = RawArchive("KALSHI", tick_ts) if with_catalog and RAW_ARCHIVE_DAILY and raw_due("KALSHI", tick_ts) else None
+        games = {}
+        if with_catalog:  # game start times + grouping for the catalog (sports milestones)
+            try:
+                games = await kalshi.fetch_milestones(self.k, tick_ts - MILESTONE_LOOKBACK_H * 3_600_000,
+                                                      tick_ts + MILESTONE_LOOKAHEAD_D * 86_400_000)
+                log.info("kalshi milestones: %d game events", len(games))
+            except Exception as e:  # catalog still refreshes; game_start_ms stays null this hour
+                log.warning("kalshi milestones failed: %r", e)
         n_markets = n_open = open_events = nbytes = 0
         try:
             async for events, r in kalshi.iter_open_event_pages(self.k):
@@ -128,7 +136,7 @@ class Collector:
                             row["write_reason"] = reason
                             prow.append(row)
                         if cw:
-                            crow.append(kalshi.catalog_row(e, m, ser, tick_ts))
+                            crow.append(kalshi.catalog_row(e, m, ser, tick_ts, games))
                     open_events += ev_open
                 await asyncio.to_thread(sink.write, prow)
                 if cw:

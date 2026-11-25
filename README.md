@@ -19,6 +19,21 @@ python -m collector status    # what is on disk
 
 Options: `--price-interval`, `--book-interval`, `--catalog-interval` (seconds), and `--no-stats-sweep`.
 
+## Candidate pairs (NFL, NBA)
+
+Deterministic matching of Kalshi × Polymarket US markets on structured fields (teams, tip-off, bet type, line),
+before any LLM call. See [DECISIONS.md D10](DECISIONS.md) and each sport's `FILTERING.md`.
+
+```bash
+python -m collector catalog                       # refresh T1 first (needs the bet-type fields added 2026-11-17)
+python -m candidates sports football/nfl          # writes data/candidate_pairs/sports/football/nfl/
+python -m candidates sports basketball/nba        # writes data/candidate_pairs/sports/basketball/nba/
+python -m candidates sports football/nfl --no-write   # report only
+```
+
+Outputs per league: `candidate_pairs.parquet` (T7), `template_pairs.parquet` (what the LLM / a person reviews,
+once per rules-template pair), `candidate_pairs_<date>.csv`, `report.json`.
+
 ## Flag a pair for order-book collection
 
 Order books (T4) are only pulled for active rows in `match_flags`. Until the matching

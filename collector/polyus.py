@@ -96,6 +96,11 @@ def _sides(m):
     return long_side or {}, short_side or {}
 
 
+def _team(side):
+    code = ((side or {}).get("team") or {}).get("abbreviation")
+    return code.lower() if isinstance(code, str) and code else None
+
+
 def _labels(tags):
     out = []
     for t in tags or []:
@@ -139,6 +144,12 @@ def catalog_row(e, m, pulled_ms):
         "category": s(m.get("category") or e.get("category")),
         "subcategory": s(m.get("eventSubcategory") or e.get("subcategory")),
         "tags": js(tags) if tags else None,
+        "competition": None, "competition_scope": None,
+        "sports_market_type": s(m.get("sportsMarketType")), "line": num(m.get("line")),
+        "yes_team_code": _team(long_side), "no_team_code": _team(short_side),
+        "event_teams": js([{"code": s((t.get("abbreviation") or "").lower()), "display": s(t.get("displayAbbreviation")),
+                            "name": s(t.get("name"))} for t in e.get("teams") or [] if isinstance(t, dict)]) or None,
+        "game_id": None,  # Polymarket US has one event per game: event_uid identifies it
         "mutually_exclusive": None, "collateral_return_type": None,
         "strike_type": None, "floor_strike": None, "cap_strike": None,
         "custom_strike": js(m.get("assetPriceTerms")), "strike_date_ms": None, "strike_period": None,

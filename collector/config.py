@@ -24,5 +24,10 @@ POLYUS_RATE = dict(start=15.0, min_rate=2.0, max_rate=20.0, burst=10)  # doc lim
 POLYUS_STATS_SWEEP_RPS = 6.0
 STATS_FLUSH_S = 300
 
+# Kalshi sports milestones (game start times) pulled with each catalog refresh: games starting
+# from this many hours ago to this many days ahead get game_start_ms / game_id in market_catalog.
+MILESTONE_LOOKBACK_H = 24
+MILESTONE_LOOKAHEAD_D = 8
+
 # Raw JSON archive of catalog pulls: first catalog refresh of each UTC day
 RAW_ARCHIVE_DAILY = True

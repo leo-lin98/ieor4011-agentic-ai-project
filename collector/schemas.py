@@ -34,6 +34,12 @@ MARKET_CATALOG = _schema([
     ("event_title", S), ("event_subtitle", S), ("market_title", S), ("market_question", S),
     ("yes_title", S), ("no_title", S), ("yes_side_label", S), ("no_side_label", S),
     ("market_type", S), ("category", S), ("subcategory", S), ("tags", S),
+    # Structured bet description, used by candidate matching (added 2026-11-17)
+    ("competition", S), ("competition_scope", S),   # Kalshi event product_metadata, e.g. "Pro Baseball" / "Spread"
+    ("sports_market_type", S), ("line", F),         # Polymarket US, e.g. "baseball_team_full_game_spread" / -1.5
+    ("yes_team_code", S), ("no_team_code", S),      # team on each side (Kalshi: from the ticker; Polymarket US: marketSides)
+    ("event_teams", S),                             # Polymarket US event teams JSON [{code, display, name}]
+    ("game_id", S),                                 # Kalshi: sports milestone id grouping a game's events (game_start_ms = its start)
     ("mutually_exclusive", B), ("collateral_return_type", S),
     ("strike_type", S), ("floor_strike", F), ("cap_strike", F), ("custom_strike", S),
     ("strike_date_ms", I), ("strike_period", S),
