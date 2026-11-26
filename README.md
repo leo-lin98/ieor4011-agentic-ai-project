@@ -7,10 +7,30 @@ Market-data endpoints on both platforms are public, so no API keys are needed.
 
 See the [event matching guide](embeddings/README.md) for the approach, commands, and evaluation results.
 
+## Match proposer
+
+An LLM reads each Kalshi event and its top 3 retrieved Polymarket US candidates and proposes
+identical, complementary or basket matches between their markets.
+
+```bash
+export OPENAI_API_KEY=...   # name only, see .env.example; the key is read from the environment
+python -m proposer --candidates data/embeddings/candidates.json --concurrency 16
+```
+
+Outputs:
+- `data/proposals/<run_id>/audit.jsonl`: one line per Kalshi event with the full top-k and the candidates sent.
+- `data/proposals/<run_id>/rejected.jsonl`: pairs or records that produced no usable response (the run continues).
+- `data/proposals/matches.sqlite3`: every accepted match, upserted by `match_id`.
+- `data/match_flags/match_flags.parquet` (T2): identical and complementary pairs as `source='proposer'` rows, inactive until judged.
+
+Every run calls the LLM for every pair, with no caching. A full snapshot makes about 63,000
+LLM calls, so limit runs with the upstream `--queries` / `--query-id` options when producing
+`candidates.json`. The tests mock the LLM and need no key.
+
 ## Setup
 
 ```bash
-pip install -r requirements.txt   # httpx, pyarrow, pandas
+pip install -r requirements.txt   # httpx, pyarrow, pandas, openai, pydantic
 ```
 
 ## Run
