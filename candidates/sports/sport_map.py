@@ -55,8 +55,10 @@ def sport_of(platform, category, subcategory=None, tags=None, series_id=None):
     if (category or "").lower() != "sports":
         return None
     if platform == "KALSHI":
+        if not isinstance(tags, str) or not tags:   # None, or NaN on some pandas/pyarrow versions
+            return None
         try:
-            tag = (json.loads(tags) or [None])[0] if tags else None
+            tag = (json.loads(tags) or [None])[0]
         except ValueError:
             return None
         return KALSHI_TAG.get(tag)
