@@ -105,12 +105,14 @@ def _outputs(pairs, approvals, as_of):
     pairs["template_pair_id"] = [C.template_pair_id(a, b) for a, b in zip(pairs.template_k, pairs.template_p)]
 
     def status(tp, direction):
-        a = approvals.get(tp)
-        if not a:
-            return "needs_template_review"
-        if a.get("status") != "approved" or (direction == "opposite" and not a.get("opposite_side_ok")):
+        a = approvals.get(tp) or {}
+        if a.get("status") == "approved":
+            if direction == "opposite" and not a.get("opposite_side_ok"):
+                return "template_rejected" if a.get("opposite_side_ok") is False else "needs_template_review"
+            return "auto_confirmed"
+        if a.get("status") == "rejected":
             return "template_rejected"
-        return "auto_confirmed"
+        return "needs_template_review"   # no entry, or "unsure"
 
     pairs["status"] = [status(tp, d) for tp, d in zip(pairs.template_pair_id, pairs.direction)]
     out = pd.DataFrame({

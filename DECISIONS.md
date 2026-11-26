@@ -179,9 +179,14 @@ Fee parameters are stored per market in `pricing_snapshots` (T3), so every price
 - Combo taker fee: `C × p × [0.0695 × (1 − p) + 0.085 × (1 − p)^4]`.
 - Change on 2026-11-06 at 1:00 PM ET: rebate tiers switch to a rolling 30-day window.
 
-**Kalshi:**
-- Per-event overrides: `fee_type_override`, `fee_multiplier_override`. Series-level fee type and multiplier also apply.
-- The general taker fee formula has the form `coef × C × P × (1 − P)` with per-contract rounding. The exact coefficient, rounding and maker fees still need to be checked against the current Kalshi fee schedule (Open items).
+**Kalshi** (fee schedule PDF, effective 2026-07-07, copy in `kalshi-fee-schedule.pdf`; verified 2026-11-25):
+- Taker: `fees = round_up(M × 0.07 × C × P × (1 − P))`, P in dollars, C contracts, M the series taker multiplier (default 1). Round up "such that fee + positionCost is rounded to a centicent" ($0.0001); `fee_rounding` docs: ceil to 6 dp per fill, then aligned to the member's balance precision ($0.01 non-direct) with a per-order rebate accumulator. Table check: 100 contracts at $0.50 → $1.75; at $0.90 → $0.63.
+- Maker: `fees = round_up(M × 0.0175 × C × P × (1 − P))`, M default 0 unless the series is listed. **Our game series charge maker fees**: `KXNFLGAME` (PDF: maker 1 / taker 1) and, per the live API, `KXNBAGAME`, `KXNFLSPREAD`, `KXNBATOTAL` are `fee_type = quadratic_with_maker_fees`, `fee_multiplier = 1`. Player-prop series are plain `quadratic` (no maker fee). Posting on Kalshi is therefore not free for our markets (~0.44¢ per contract at 50¢).
+- `KXMVE` (combos excluding uncorrelated NFL combos): maker 2 / taker 1. Several politics / crypto EOY series are 0 / 0.
+- No settlement fee, no membership fee, no ACH deposit/withdrawal fee; card deposits up to 2%; wire withdrawals only ≥ $500k. Fees are charged only on matched orders; no fee on cancels.
+- Live parameters: series `fee_type`, `fee_multiplier`; event `fee_type_override`, `fee_multiplier_override` (none set on our games); `GET /series/fee_changes` (empty on 2026-11-25). All stored per market in T3.
+
+**Polymarket US vs the market object (2026-11-25):** every open market reports `feeCoefficient = 0.095` while the fee page gives Θ = 0.0695 for API accounts (with a 70% rebate paid weekly through 2026-12-31). Which one is charged is unresolved until a real trade shows the fee. NFL moneylines tick at $0.0025, NBA at $0.01; minimum quantity 0.01 contract. Note docs.polymarket.**com** (international Polymarket: 0.05 taker on sports) is a different exchange and does not apply.
 
 ---
 
@@ -272,8 +277,26 @@ Narrow Kalshi × Polymarket US down to likely-identical pairs before any LLM cal
 - **Kalshi game start times:** sports milestones (`GET /milestones`), pulled with each catalog refresh into T1 `game_start_ms` and `game_id`. Football tickers carry only the date.
 - **Football** is split into `football/nfl/` and `football/cfb/` (`candidates/sports/football/FILTERING.md`). Nov 25 catalog, 7-day window: NFL 16/16 games, 6,301 pairs / 75 template pairs; college 76 games, 5,477 / 82.
 - **Basketball** (`candidates/sports/basketball/FILTERING.md`): NBA only (`basketball/nba/`), same layout as football. Nov 25: 30/30 Kalshi games, 6,288 pairs / 86 template pairs, mostly player lines.
-- **Scope decision (2026-11-25):** NFL and NBA only until the end-to-end path (template review → T2 → books → edge) works. Other sports and leagues stay in the "Not covered" report.
+- **Scope decision (2026-11-25):** NFL and NBA only until the end-to-end path (template review → T2 → books → edge) works. Other sports and leagues stay in the "Not covered" report. Each league config has `BETS`; set to full-game moneylines for the initial build-out.
+- **LLM judge (2026-11-25, `judge/`):** one call per template pair (one example pair per direction, each with its own two rulebooks, plus the code's claim), `gpt-6-luna`, strict JSON: `identical` / `not_identical` / `unsure` + `opposite_side_ok` + a checklist. Writes `template_approvals.json`; never overwrites a human entry; logs every call to `data/judge/`. `unsure` leaves pairs at `needs_template_review`.
+- **One rubric per category (`judge/rubrics/`):** `core.py` is domain-neutral (schema, call, approvals, logs); a rubric supplies the checklist dimensions, the verdict scope, the accepted-risks policy, per-league notes and what the code already verified. `sports.py` is the only rubric so far; crypto / economics / politics get one when their `candidates/` matcher exists. Human labels on verdicts (`--label agree|disagree`) build the eval set; `--eval` reports agreement by prompt version.
+- **Judge scope / accepted risks (2026-11-25):** the judge decides whether two contracts pay the same way when the game is **played to an official result** (win, loss, tie, overtime) and whether the direction holds in those outcomes. Cancellation, postponement beyond each platform's window, suspension and shortened games are recorded on the checklist but are **accepted risks**: both platforms then settle at their own "fair price", which may differ, and nothing can be done about it; too rare to matter. First verdicts (prompt v3): NFL moneyline identical, opposite OK (tie → $0.50 both); NBA moneyline identical.
 - **Baseball** (`candidates/sports/baseball/FILTERING.md`): futures by season + player/team; games by league + scheduled start + teams, then (period, bet, team, line) for winner, run line, totals, team totals, first 5 innings, single innings, first-inning run, extra innings. Verified on the 2026 World Series Game 5 (`selftest.py`).
+
+---
+
+## D11. Monitoring and execution (added 2026-11-25)
+
+Agreed before building `arb/`:
+
+1. **Directions are explicit everywhere.** A pair's `direction` (`same` / `opposite`) is turned into two combos of two legs each (`arb/legs.py`), derived from the payoff matrix and asserted: in every outcome exactly one leg pays $1. Legs are shown in words (platform, market, side bought) in T2, logs and the dashboard. Tests cover both directions. A direction bug is the one way to lose with certainty.
+2. **Speed: event-driven, not polled.** Flagged markets stream over both WebSockets (Kalshi `orderbook_delta` with `seq`, Polymarket US `SUBSCRIPTION_TYPE_MARKET_DATA` full books); books are kept in memory and the edge is recomputed on every message. REST remains the fallback. Target is sub-second detection; the process runs on the EC2 box (`arb-collector-use2`, Amazon Linux 2023, us-east-2; the free plan cannot use us-east-1, ~10 ms away, not worth an upgrade).
+3. **Depth always.** Never top-of-book alone. Size = the quantity available on both legs at prices that still clear fees (first version: min of the two sides' quantity at their best levels; general version: joint walk of both ask ladders until `ask_K + ask_P + fees ≥ 100¢`). Edge is reported as executable quantity + average price per leg.
+4. **Fees on the walked quantity**, with each exchange's rounding (D6): Kalshi ceil to the cent per fill, taker 0.07 / maker 0.0175 × series multiplier (our game series charge maker fees); Polymarket US 0.0695 API taker with banker's rounding per order, maker 0, 70% rebate credited weekly (tracked separately from the fee paid at fill). Parameters per market from T3, never hard-coded. One small real fill per platform confirms the schedule before paper P&L is trusted.
+5. **Leg risk.** Both legs sent at once as FOK/IOC, thinner leg first. If one fills and the other misses: re-send the missing leg at the next price level while total cost ≤ break-even; else hedge on the same platform and book the loss. Every such event is logged; realised slippage is the number that decides whether the strategy works.
+6. **Horizon.** Only pairs closing within 7 days (D10 window), so capital lock-up is hours to days.
+7. **Cadence.** Collector catalog hourly → candidates → judge → `flag` adapter. T3 sweep can slow to 5 min (discovery and counts only). Once flagged, a market is streamed until it settles; its flag then goes inactive.
+8. **Paper before live.** Phase A measures edge size, depth and persistence from stored/streamed books (T8). Live execution (tiny size, hard caps, kill switch) only after that, and only with verified fees.
 
 ---
 
@@ -282,9 +305,11 @@ Narrow Kalshi × Polymarket US down to likely-identical pairs before any LLM cal
 - [x] Polymarket US max page size: 500. The book has an exchange timestamp (`transactTime`). BBO path: `/v1/markets/{slug}/bbo`.
 - [ ] Polymarket US: a Markets WebSocket exists (`docs.polymarket.us/api-reference/websocket/markets`). Auth and message format not yet checked. Also check whether market `id` stays fixed when a slug is edited.
 - [x] Kalshi series fee fields: `fee_type` (`quadratic`, `quadratic_with_maker_fees`, `quadratic_with_combo_maker_fees`), `fee_multiplier`. `GET /series` returns all ~15.8k series in one call. Endpoint costs: default 10 tokens.
-- [ ] Kalshi: exact coefficient for each `fee_type` (taker ≈ 0.07 × C × P × (1 − P), maker fees on `*_with_maker_fees`; check the published fee schedule). Rounding is documented at `docs.kalshi.com/getting_started/fee_rounding`.
-- [ ] Kalshi WebSocket: **requires authentication**, even for public channels (`orderbook_delta`, `ticker`). Needs a Kalshi API key ID and RSA private key. `.env` currently holds only `KALSHI_API`.
-- [ ] Unauthenticated Kalshi reads get ~4–5 req/s. Check whether authenticated REST reads get the documented Basic tier (20 req/s).
+- [x] Kalshi fee formula: taker 0.07, maker 0.0175, see D6 (PDF effective 2026-07-07).
+- [ ] Polymarket US: is the fee charged Θ = 0.0695 (API program) or the market's `feeCoefficient = 0.095`? Verify with one small real order on each platform and read the fee from the fill.
+- [x] API keys (verified 2026-11-25 with `python -m collector auth`, see `collector/auth.py`). Kalshi: key ID + Ed25519 private key (RSA also accepted); signed `GET /portfolio/balance` returns 200. Polymarket US: key ID + Ed25519 secret; authenticated endpoints are on `https://api.polymarket.us` (public market data stays on `gateway.polymarket.us`); signed `GET /v1/account/balances` returns 200. `.env`: `KALSHI_KEY_ID`, `KALSHI_API`, `POLYMARKET_API`, `SECRET_POLY`.
+- [ ] Both WebSockets **require authentication on the handshake**, even for public channels (Kalshi `orderbook_delta` / `ticker`; Polymarket US `wss://api.polymarket.us/v1/ws/markets`, full books, ≤100 markets per subscription). Not wired into the collector yet; the collector still polls public REST unauthenticated.
+- [ ] Kalshi rate limits (docs): signed requests use the account Read budget (Basic 200 tokens/s ≈ 20 req/s); unauthenticated requests have a separate, undocumented limit (measured ~4–5 req/s). Polymarket US: 25 req/s per IP either way. Switch the Kalshi sweep to signed requests when the flagged list grows.
 - [x] Polymarket US URL: `https://polymarket.us/event/{event_slug}` (confirmed 200). Kalshi URL: `https://kalshi.com/markets/{series_ticker}` (unconfirmed; kalshi.com blocks automated fetches).
 - [ ] Final status/result for markets that leave the open list: use Kalshi `min_updated_ts` and Polymarket US `/v1/markets/{slug}/settlement`. Not built yet.
 - [ ] Skew threshold for D7.4, set from measured latency.

@@ -60,8 +60,12 @@ def run_league(cfg, write=True, frames=None, approvals=None, window_days=_DEFAUL
         p_close = dict(zip(p.event_slug, C.market_close_ms(p, "POLYUS")))
         g_report["unpaired_polyus_games"] = [u for u in g_report["unpaired_polyus_games"]
                                              if p_close.get(u["slug"], 0) <= end]
+    # Template pairs cover EVERY matched bet type (the review queue runs ahead of what is enabled);
+    # candidate_pairs only the bet types in cfg.BETS.
+    all_out, templates = _outputs(pairs.copy(), approvals, min(k_asof, p_asof), cfg)
+    examples = all_out.groupby(["template_pair_id", "direction"]).head(1) if len(all_out) else all_out
     pairs, bet_filter = C.bet_filter(pairs, getattr(cfg, "BETS", None), cfg.LEAGUE["name"])
-    out, templates = _outputs(pairs, approvals, min(k_asof, p_asof), cfg)
+    out, _ = _outputs(pairs, approvals, min(k_asof, p_asof), cfg)
 
     k_un, p_un = k.drop(index=list(k_fut | k_game)), p.drop(index=list(p_fut | p_game))
     report = dict(
@@ -100,6 +104,7 @@ def run_league(cfg, write=True, frames=None, approvals=None, window_days=_DEFAUL
         out_dir = C.OUT / "sports" / "football" / cfg.OUT_NAME
         C.write_parquet(out, C.CANDIDATE_PAIRS, out_dir / "candidate_pairs.parquet")
         C.write_parquet(templates, C.TEMPLATE_PAIRS, out_dir / "template_pairs.parquet")
+        C.write_parquet(examples, C.CANDIDATE_PAIRS, out_dir / "template_examples.parquet")  # one pair per template x direction, every bet type (judge input)
         report["csv"] = str(C.write_csv(out, C.csv_path(out_dir, min(k_asof, p_asof))))
         C.write_json(report, out_dir / "report.json")
     return out, templates, report
@@ -111,12 +116,14 @@ def _outputs(pairs, approvals, as_of, cfg):
     pairs["template_pair_id"] = [C.template_pair_id(a, b) for a, b in zip(pairs.template_k, pairs.template_p)]
 
     def status(tp, direction):
-        a = approvals.get(tp)
-        if not a:
-            return "needs_template_review"
-        if a.get("status") != "approved" or (direction == "opposite" and not a.get("opposite_side_ok")):
+        a = approvals.get(tp) or {}
+        if a.get("status") == "approved":
+            if direction == "opposite" and not a.get("opposite_side_ok"):
+                return "template_rejected" if a.get("opposite_side_ok") is False else "needs_template_review"
+            return "auto_confirmed"
+        if a.get("status") == "rejected":
             return "template_rejected"
-        return "auto_confirmed"
+        return "needs_template_review"   # no entry, or "unsure"
 
     pairs["status"] = [status(tp, d) for tp, d in zip(pairs.template_pair_id, pairs.direction)]
     out = pd.DataFrame({

@@ -5,7 +5,8 @@ ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
 
 KALSHI_BASE = "https://external-api.kalshi.com/trade-api/v2"
-POLYUS_BASE = "https://gateway.polymarket.us"
+POLYUS_BASE = "https://gateway.polymarket.us"      # public market data
+POLYUS_API_BASE = "https://api.polymarket.us"      # authenticated: account, portfolio, orders, WebSocket
 USER_AGENT = "pm-arb-research-collector/0.1"
 
 # Loop cadences (seconds)

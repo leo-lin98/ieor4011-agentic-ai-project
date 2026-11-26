@@ -7,6 +7,7 @@
   python -m collector flag add KALSHI:<ticker> POLYUS:<id> [--relationship identical] [--note ...]
   python -m collector flag list | flag off <pair_id> | flag on <pair_id>
   python -m collector status               # what is on disk
+  python -m collector auth                 # check the API keys in .env (one signed request per platform)
 """
 import argparse
 import asyncio
@@ -83,6 +84,7 @@ def main():
     sub.add_parser("status")
     sub.add_parser("display", help="rebuild data/display/*.ipynb (static view of each table)")
     sub.add_parser("profiles", help="rebuild T0 market_profiles from the current catalog")
+    sub.add_parser("auth", help="check the API keys in .env with one signed request per platform")
     fl = sub.add_parser("flag")
     fsub = fl.add_subparsers(dest="flag_cmd", required=True)
     fa = fsub.add_parser("add")
@@ -102,6 +104,9 @@ def main():
         from .profiles import build_profiles
         print("market_profiles rows:", build_profiles())
         return
+    if args.cmd == "auth":
+        from .auth import check
+        sys.exit(0 if check() else 1)
     if args.cmd == "display":
         from .display import build_all
         for p in build_all():
