@@ -74,6 +74,20 @@
   .jd .rb > div { font-size: 12px; white-space: pre-wrap; color: #c9d1d9; padding: 10px; border: 1px solid var(--line); border-radius: 6px; }
   .jd .rb > div.P { border-color: var(--poly-line); } .jd .rb > div.K { border-color: var(--kalshi-line); }
   .jd .ex { font-size: 12px; margin: 2px 0; }
+  /* tabs 4-5 */
+  td.edge { font-family: ui-monospace, Menlo, monospace; font-weight: 600; white-space: nowrap; }
+  td.edge.pos { color: var(--ok); } td.edge.neg { color: var(--muted); }
+  tr.pending td { background: rgba(201, 162, 39, .10); }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: var(--opp); }
+  .dot.on { background: var(--ok); }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; padding: 12px 16px; }
+  .kpi { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; background: var(--panel); }
+  .kpi .lbl { color: var(--muted); font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em; }
+  .kpi .val { font-size: 18px; font-weight: 600; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .kpi .val.pos { color: var(--ok); } .kpi .val.neg { color: var(--opp); }
+  .kpi .sub { font-size: 11.5px; }
+  tr.trow { cursor: pointer; } tr.trow:hover td { filter: brightness(1.15); }
+  tr.tdetail td { background: var(--panel); font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; white-space: pre-wrap; }
   @media (max-width: 900px) { .cols { grid-template-columns: 1fr; } .col { border-right: 0; border-bottom: 1px solid var(--line); } th { position: static; } }
 </style>
 </head>
@@ -84,6 +98,8 @@
     <button id="t1" class="on" onclick="tab(1)">Markets</button>
     <button id="t2" onclick="tab(2)">Candidates</button>
     <button id="t3" onclick="tab(3)">Judge</button>
+    <button id="t4" onclick="tab(4)">Live</button>
+    <button id="t5" onclick="tab(5)">Paper</button>
   </div>
   <div class="counts" id="counts"></div>
 </header>
@@ -141,6 +157,31 @@
   </table>
 </section>
 
+<section id="v4" hidden>
+  <div class="bar">
+    <span id="l_status" class="muted">connecting…</span>
+    <label class="chk"><input type="checkbox" id="l_pos"> positive edge only</label>
+    <input type="text" id="l_q" placeholder="filter by team / pair">
+    <span class="n" id="l_n"></span>
+  </div>
+  <table class="live">
+    <thead><tr><th>Edge after fees</th><th>Combo (what we would buy)</th><th class="k">Kalshi ask × size</th><th class="p">Polymarket US ask × size</th><th>Sum</th><th>Skew</th><th>Game / pair</th></tr></thead>
+    <tbody id="l_rows"></tbody>
+  </table>
+</section>
+
+<section id="v5" hidden>
+  <div class="bar"><span id="pp_status" class="muted"></span><span class="n" id="pp_n"></span></div>
+  <div class="kpis" id="pp_kpis"></div>
+  <div class="bar" style="border-top:1px solid var(--line)"><strong>Paper trades</strong><span class="muted">&nbsp; newest first · every timestamp in ms · click a row for both legs</span></div>
+  <table class="paper">
+    <thead><tr><th>Fired (UTC)</th><th title="same: Kalshi YES = Polymarket YES, so legs are YES+NO or NO+YES. opposite: Polymarket's YES is the other team, so legs are YES+YES or NO+NO.">Direction · pair</th><th class="k">Kalshi leg (side = what it pays on)</th><th class="p">Polymarket US leg</th><th>Qty</th><th>Sum ¢</th><th>Fees $</th><th>Locked P&L $</th><th>Status</th><th>Settled P&L $</th><th>Skew / confirm</th></tr></thead>
+    <tbody id="pp_rows"></tbody>
+  </table>
+  <div class="bar" style="border-top:1px solid var(--line)"><strong>Recent positive edges seen</strong><span class="muted">&nbsp; fired or not (one line per combo per second)</span></div>
+  <table class="paper"><thead><tr><th>Seen (UTC)</th><th>Combo</th><th>Edge ¢</th><th>Qty</th><th>Sum ¢</th><th>Skew ms</th></tr></thead><tbody id="pp_edges"></tbody></table>
+</section>
+
 <div id="drawer">
   <div class="hd"><strong id="d_title"></strong><span id="d_meta" class="muted"></span><button onclick="closeDrawer()">close</button></div>
   <div class="cols">
@@ -165,7 +206,7 @@ async function api(path, params) {
   const r = await fetch(u); return r.json();
 }
 
-function tab(n) { state.tab = n; for (const i of [1,2,3]) { $("v"+i).hidden = n !== i; $("t"+i).classList.toggle("on", n === i); } if (n === 2) loadPairs(); if (n === 3) loadJudge(); }
+function tab(n) { state.tab = n; for (const i of [1,2,3,4,5]) { $("v"+i).hidden = n !== i; $("t"+i).classList.toggle("on", n === i); } if (n === 2) loadPairs(); if (n === 3) loadJudge(); if (n === 4) loadLive(); if (n === 5) loadPaper(); }
 
 async function summary() {
   const s = await api("/api/summary");
@@ -294,6 +335,76 @@ function resetJudge() { for (const id of ["j_source","j_league","j_verdict"]) $(
 for (const id of ["j_source","j_league","j_verdict"]) $(id).addEventListener("change", loadJudge);
 $("j_q").addEventListener("input", debounce(loadJudge, 250));
 document.addEventListener("keydown", e => { if (e.key === "Escape") closeDrawer(); });
+
+// ------------------------------------------------------------ tab 4: live
+const tms = ms => ms == null ? "" : new Date(Number(ms)).toISOString().slice(11, 23);
+const money = x => x == null ? "—" : (x < 0 ? "−" : "") + "$" + Math.abs(Number(x)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const cents = x => x == null ? "—" : Number(x).toFixed(2) + "¢";
+async function loadLive() {
+  if (state.tab !== 4) return;
+  const d = await api("/api/live");
+  const s = d.stream || {};
+  $("l_status").innerHTML = `<span class="dot ${d.running ? "on" : ""}"></span>${d.running ? "monitor running" : "monitor not running (python -m arb)"} · ` +
+    `Kalshi ws <span class="${s.kalshi_connected ? "k" : "muted"}">${s.kalshi_connected ? "connected" : "down"}</span> · Polymarket ws <span class="${s.polyus_connected ? "p" : "muted"}">${s.polyus_connected ? "connected" : "down"}</span>` +
+    ` · ${fmt(s.updates)} book updates · books with depth K ${d.books?.KALSHI ?? 0} / P ${d.books?.POLYUS ?? 0} · ${d.pairs ?? 0} pairs · pending ${d.pending ?? 0} · state ${d.age_ms == null ? "" : (d.age_ms / 1000).toFixed(1) + "s old"}`;
+  let rows = d.rows || [];
+  const q = $("l_q").value.trim().toLowerCase();
+  if (q) rows = rows.filter(r => (r.legs + " " + r.note + " " + r.pair_id).toLowerCase().includes(q));
+  if ($("l_pos").checked) rows = rows.filter(r => r.edge_c != null && r.edge_c > 0);
+  $("l_n").textContent = `${rows.length} combos · ${rows.filter(r => r.edge_c > 0).length} positive after fees`;
+  $("l_rows").innerHTML = rows.map(r => `<tr class="${r.pending ? "pending" : ""}">
+    <td class="edge ${r.edge_c > 0 ? "pos" : "neg"}">${r.edge_c == null ? "no book" : (r.edge_c > 0 ? "+" : "") + Number(r.edge_c).toFixed(2) + "¢"}</td>
+    <td>${esc(r.legs)}${r.pending ? ' <span class="pill same">confirming</span>' : ""}</td>
+    <td class="k">${r.ask_k_c == null ? "—" : cents(r.ask_k_c) + " × " + fmt(Math.round(r.qty_k))}</td>
+    <td class="p">${r.ask_p_c == null ? "—" : cents(r.ask_p_c) + " × " + fmt(Math.round(r.qty_p))}</td>
+    <td class="mono">${r.sum_c == null ? "" : Number(r.sum_c).toFixed(2)}</td>
+    <td class="mono ${r.skew_ms > 500 ? "muted" : ""}">${r.skew_ms == null ? "" : r.skew_ms + " ms"}</td>
+    <td class="sub">${esc((r.note || "").split(" key=")[0])}<div class="mono muted">${esc(r.pair_id)}</div></td></tr>`).join("");
+}
+$("l_pos").addEventListener("change", loadLive); $("l_q").addEventListener("input", debounce(loadLive, 200));
+setInterval(() => { if (state.tab === 4) loadLive(); if (state.tab === 5) loadPaper(); }, 1000);
+
+// ------------------------------------------------------------ tab 5: paper
+const legTxt = l => `<b>${l.side.toUpperCase()}</b>${l.label ? ` <span class="sub">= ${esc(l.label)}</span>` : ""} @ ${Number(l.avg_price_c).toFixed(2)}¢ × ${fmt(l.qty)}${l.levels > 1 ? ` (${l.levels} lvls)` : ""}<div class="mono muted">${esc(l.market_uid)}</div>`;
+async function loadPaper() {
+  if (state.tab !== 5) return;
+  const d = await api("/api/paper");
+  const s = d.state;
+  if (!s) { $("pp_status").textContent = "no paper state yet (python -m arb)"; return; }
+  const total = s.cash.KALSHI + s.cash.POLYUS + s.tied_up.KALSHI + s.tied_up.POLYUS;
+  const kpi = (lbl, val, cls = "", sub = "") => `<div class="kpi"><div class="lbl">${lbl}</div><div class="val ${cls}">${val}</div><div class="sub muted">${sub}</div></div>`;
+  const sign = x => x > 0 ? "pos" : x < 0 ? "neg" : "";
+  $("pp_status").textContent = `as of ${tms(s.ts_ms)} UTC · counters ${JSON.stringify(s.counters)}`;
+  $("pp_kpis").innerHTML =
+    kpi("Total equity", money(total), sign(total - 2 * s.start_cash), `start ${money(2 * s.start_cash)} · ${money(total - 2 * s.start_cash)} vs start`) +
+    kpi("Locked P&L (all trades)", money(s.locked_pnl_total), sign(s.locked_pnl_total), `${s.trades} trades · ${s.open} open · ${s.settled} settled`) +
+    kpi("Settled P&L", money(s.settled_pnl), sign(s.settled_pnl), "realised at market resolution") +
+    kpi("Fees paid", money(s.fees_paid), "", `Polymarket rebate expected ${money(s.rebate_expected)}`) +
+    kpi("Kalshi account", money(s.cash.KALSHI), "", `+ ${money(s.tied_up.KALSHI)} in open positions`) +
+    kpi("Polymarket US account", money(s.cash.POLYUS), "", `+ ${money(s.tied_up.POLYUS)} in open positions`);
+  $("pp_n").textContent = `${d.trades_total || 0} trades`;
+  $("pp_rows").innerHTML = (d.trades || []).map((t, i) => `<tr class="trow" data-i="${i}">
+    <td class="mono">${tms(t.fired_ms)}</td>
+    <td><span class="pill ${esc(t.direction)}">${esc(t.direction)}</span> ${esc((t.note || "").split(" direction")[0])}<div class="mono muted">${esc(t.pair_id)}</div></td>
+    <td class="k">${legTxt(t.legs[0])}</td><td class="p">${legTxt(t.legs[1])}</td>
+    <td class="mono">${fmt(t.qty)}</td><td class="mono">${Number(t.sum_c).toFixed(2)}</td><td class="mono">${Number(t.fee_k + t.fee_p).toFixed(2)}</td>
+    <td class="edge pos">${money(t.locked_pnl)}<div class="sub muted">${Number(t.edge_c).toFixed(2)}¢/contract</div></td>
+    <td><span class="pill st">${esc(t.status)}</span>${t.result ? `<div class="sub">${esc(t.result)}</div>` : ""}</td>
+    <td class="mono">${t.settled_pnl == null ? "—" : money(t.settled_pnl)}</td>
+    <td class="mono sub">${t.skew_ms} ms / ${t.confirm_latency_ms} ms</td></tr>`).join("");
+  window._trades = d.trades || [];
+  for (const tr of $("pp_rows").querySelectorAll("tr.trow")) tr.onclick = () => {
+    const nx = tr.nextElementSibling;
+    if (nx && nx.classList.contains("tdetail")) { nx.remove(); return; }
+    const t = window._trades[Number(tr.dataset.i)];
+    const det = document.createElement("tr"); det.className = "tdetail";
+    det.innerHTML = `<td colspan="11">${esc(JSON.stringify(t, null, 1))}</td>`;
+    tr.after(det);
+  };
+  $("pp_edges").innerHTML = (d.edges_recent || []).map(e => `<tr><td class="mono">${tms(e.ts_ms)}</td><td class="mono">${esc(e.combo_key)}</td>
+    <td class="edge pos">+${Number(e.edge_c).toFixed(2)}</td><td class="mono">${fmt(e.qty)}</td><td class="mono">${(e.vwap_k_c + e.vwap_p_c).toFixed(2)}</td><td class="mono">${e.skew_ms}</td></tr>`).join("")
+    || `<tr><td colspan="6" class="muted">none yet</td></tr>`;
+}
 
 summary(); loadMarkets();
 </script>

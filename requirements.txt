@@ -3,3 +3,4 @@ pyarrow>=14
 pandas>=2.0
 cryptography>=42      # request signing (collector/auth.py)
 openai>=1.80          # template-pair judge (judge/)
+websockets>=13        # live order books (arb/books.py)

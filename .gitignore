@@ -1,6 +1,8 @@
 .env
 data/*
 !data/display/
+# paper-trading log (trades.jsonl, edges.jsonl, vanished.jsonl, state.json): small, kept for the write-up
+!data/paper/
 __pycache__/
 *.pyc
 .DS_Store

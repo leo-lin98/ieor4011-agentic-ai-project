@@ -8,13 +8,15 @@ from candidates.sports.sport_map import sport_of
 from collector.config import DATA
 from collector.util import now_ms
 
+# Rules text is NOT loaded into the markets frame (it is most of the memory); pair_detail reads it per market.
 CATALOG_COLS = [
     "market_uid", "event_uid", "platform", "native_event_id", "market_slug", "event_slug", "series_id",
     "event_title", "market_title", "market_question", "yes_title", "yes_side_label", "no_side_label",
     "category", "subcategory", "tags", "competition", "competition_scope", "sports_market_type", "line",
     "open_time_ms", "close_time_ms", "event_end_ms", "game_start_ms", "status_canonical", "market_url",
-    "rules_primary", "rules_secondary", "description", "rules_disclaimer", "last_seen_ms",
+    "last_seen_ms",
 ]
+RULES_COLS = ["market_uid", "rules_primary", "rules_secondary", "description", "rules_disclaimer"]
 WINDOW_DAYS = 7
 
 
@@ -70,7 +72,23 @@ def load_markets():
     now = now_ms()
     df["in_window"] = (df.close_ms >= now) & (df.close_ms <= now + WINDOW_DAYS * 86_400_000)
     df["category"] = df.category.fillna("(none)")
+    for c in ("category", "sport", "league", "bet_type", "platform", "status_canonical"):
+        df[c] = df[c].astype("category")   # repeated strings -> small codes
     return df, as_of
+
+
+def rules_for(uid):
+    """Rules text for one market, read from the catalog on demand."""
+    import pyarrow.compute as pc
+
+    plat = uid.split(":", 1)[0]
+    t = pq.read_table(DATA / "market_catalog" / "current" / f"{plat}.parquet", columns=RULES_COLS,
+                      filters=[("market_uid", "==", uid)])
+    if t.num_rows == 0:
+        return ""
+    r = t.slice(0, 1).to_pylist()[0]
+    parts = (r["rules_primary"], r["rules_secondary"]) if plat == "KALSHI" else (r["description"], r["rules_disclaimer"])
+    return "\n\n".join(x for x in parts if isinstance(x, str) and x.strip())
 
 
 def load_pairs(name="candidate_pairs"):
@@ -164,6 +182,36 @@ class Store:
         d["status_counts"] = enabled.status.value_counts().to_dict() if len(enabled) else {}
         return d
 
+    # ------------------------------------------------------------ tabs 4-5: live monitor and paper trading (files written by `python -m arb`)
+
+    @staticmethod
+    def live():
+        import json
+        p = DATA / "arb" / "live.json"
+        if not p.exists():
+            return {"running": False, "rows": []}
+        d = json.loads(p.read_text())
+        d["running"] = (now_ms() - d.get("ts_ms", 0)) < 10_000
+        d["age_ms"] = now_ms() - d.get("ts_ms", 0)
+        return d
+
+    @staticmethod
+    def paper(limit=500):
+        import json
+        base = DATA / "paper"
+        out = {"state": None, "trades": [], "edges_recent": []}
+        if (base / "state.json").exists():
+            out["state"] = json.loads((base / "state.json").read_text())
+        if (base / "trades.jsonl").exists():
+            lines = (base / "trades.jsonl").read_text().splitlines()
+            out["trades"] = [json.loads(l) for l in lines if l.strip()][::-1][:limit]
+            out["trades_total"] = len(lines)
+        if (base / "edges.jsonl").exists():
+            lines = (base / "edges.jsonl").read_text().splitlines()[-2000:]
+            out["edges_recent"] = [json.loads(l) for l in lines if l.strip()][::-1][:200]
+            out["edges_total"] = len(lines)
+        return out
+
     # ------------------------------------------------------------ tab 1
 
     def filter_markets(self, platform=None, category=None, sport=None, league=None, bet=None, q=None, window=False):
@@ -229,9 +277,7 @@ class Store:
                     "event_title": _py(m.event_title), "market": _py(m.market), "yes": _py(m.yes),
                     "no": _py(m.no_side_label), "bet_type": _py(m.bet_type), "line": _py(m.line),
                     "close_ms": _py(m.close_ms), "game_start_ms": _py(m.game_start_ms), "url": _py(m.market_url),
-                    "rules": "\n\n".join(x for x in (
-                        (m.rules_primary, m.rules_secondary) if side == "kalshi" else (m.description, m.rules_disclaimer))
-                        if isinstance(x, str) and x.strip()),
+                    "rules": rules_for(uid),
                 }
             else:
                 out[side] = None

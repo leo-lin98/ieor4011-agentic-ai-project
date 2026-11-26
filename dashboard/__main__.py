@@ -55,7 +55,7 @@ def make_handler(store: Store):
                                          sport=qs.get("sport") or None, league=qs.get("league") or None,
                                          bet=qs.get("bet") or None, q=qs.get("q") or None,
                                          window=qs.get("window") == "1")
-                page, size = int(qs.get("page", 1)), min(int(qs.get("size", 100)), 500)
+                page, size = int(qs.get("page", 1)), min(int(qs.get("size", 100)), 1000)
                 m = m.sort_values(["close_ms", "platform", "event_title"], na_position="last")
                 rows = records(m.iloc[(page - 1) * size: page * size], MARKET_COLS)
                 return self._json({"total": int(len(m)), "page": page, "size": size, "rows": rows,
@@ -93,6 +93,10 @@ def make_handler(store: Store):
             if u.path == "/api/pair":
                 d = store.pair_detail(qs.get("id", ""))
                 return self._json(d if d else {"error": "unknown pair"}, 200 if d else 404)
+            if u.path == "/api/live":
+                return self._json(store.live())
+            if u.path == "/api/paper":
+                return self._json(store.paper(limit=min(int(qs.get("limit", 500)), 5000)))
             if u.path == "/api/reload":
                 store.reload()
                 return self._json({"ok": True, "as_of": store.as_of})
