@@ -1,8 +1,9 @@
 """Static configuration. Everything tunable lives here or on the CLI."""
+import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-DATA = ROOT / "data"
+DATA = Path(os.environ["IEOR_COLLECTOR_DATA_DIR"]).resolve() if os.environ.get("IEOR_COLLECTOR_DATA_DIR") else ROOT / "data"
 
 KALSHI_BASE = "https://external-api.kalshi.com/trade-api/v2"
 POLYUS_BASE = "https://gateway.polymarket.us"      # public market data

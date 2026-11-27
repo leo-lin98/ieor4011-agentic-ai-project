@@ -10,9 +10,8 @@
 import argparse
 import importlib
 import json
+import sys
 from datetime import datetime, timezone
-
-import pandas as pd
 
 from collector.config import DATA
 
@@ -20,6 +19,21 @@ from . import core, rubrics
 
 
 def main():
+    if sys.argv[1:2] == ["tier"]:
+        from .tier import main as judge_tiers
+
+        return judge_tiers(sys.argv[2:])
+    if sys.argv[1:2] == ["pipeline"]:
+        from .pipeline import main as run_pipeline
+
+        return run_pipeline(sys.argv[2:])
+    if sys.argv[1:2] == ["pairs"]:
+        from .pairs import main as review_pairs
+
+        return review_pairs(sys.argv[2:])
+
+    import pandas as pd
+
     ap = argparse.ArgumentParser(prog="judge")
     ap.add_argument("category")
     ap.add_argument("subcategory", help="e.g. football/nfl, basketball/nba")
