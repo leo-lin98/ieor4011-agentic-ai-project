@@ -21,6 +21,20 @@ CREATE TABLE IF NOT EXISTS reviews (
     polyus_fingerprint TEXT NOT NULL,
     PRIMARY KEY (kalshi_market_uid, polyus_market_uid)
 ) WITHOUT ROWID;
+CREATE TABLE IF NOT EXISTS market_absences (
+    kalshi_market_uid TEXT NOT NULL,
+    polyus_catalog_sha256 TEXT NOT NULL,
+    kalshi_fingerprint TEXT NOT NULL,
+    reviewed_at TEXT NOT NULL,
+    PRIMARY KEY (kalshi_market_uid, polyus_catalog_sha256, kalshi_fingerprint)
+) WITHOUT ROWID;
+CREATE TABLE IF NOT EXISTS completed_reviews (
+    run_id TEXT NOT NULL,
+    run_created_at TEXT NOT NULL,
+    kalshi_market_uid TEXT NOT NULL,
+    completed_at TEXT NOT NULL,
+    PRIMARY KEY (run_id, run_created_at, kalshi_market_uid)
+) WITHOUT ROWID;
 CREATE TABLE IF NOT EXISTS benchmarks (
     name TEXT PRIMARY KEY,
     frozen_at TEXT
@@ -77,7 +91,62 @@ def decisions(path, kalshi_uid):
         )}
 
 
-def save_decision(path, kalshi, polyus, label):
+def absence_key(kalshi, polyus_snapshot):
+    return kalshi["market_uid"], polyus_snapshot, rule_fingerprint(kalshi)
+
+
+ABSENCE_FILTER = "kalshi_market_uid = ? AND polyus_catalog_sha256 = ? AND kalshi_fingerprint = ?"
+
+
+def market_absence(path, kalshi, polyus_snapshot):
+    with connection(path) as db:
+        row = db.execute(f"SELECT reviewed_at FROM market_absences WHERE {ABSENCE_FILTER}",
+                         absence_key(kalshi, polyus_snapshot)).fetchone()
+        return row["reviewed_at"] if row else None
+
+
+def review_progress(path, run_key, polyus_snapshot):
+    with connection(path) as db:
+        completed = {row[0] for row in db.execute("""
+            SELECT kalshi_market_uid FROM completed_reviews WHERE run_id = ? AND run_created_at = ?
+        """, run_key)}
+        absences = {tuple(row) for row in db.execute("""
+            SELECT kalshi_market_uid, kalshi_fingerprint FROM market_absences WHERE polyus_catalog_sha256 = ?
+        """, (polyus_snapshot,))}
+    return completed, absences
+
+
+def set_review_complete(path, run_key, kalshi_uid, complete):
+    key = (*run_key, kalshi_uid)
+    with connection(path, write=True) as db:
+        if complete:
+            db.execute("INSERT INTO completed_reviews VALUES (?, ?, ?, ?) ON CONFLICT DO NOTHING", (*key, now()))
+        else:
+            db.execute("""
+                DELETE FROM completed_reviews WHERE run_id = ? AND run_created_at = ? AND kalshi_market_uid = ?
+            """, key)
+
+
+def set_market_absence(path, kalshi, catalog, polyus_snapshot, absent):
+    key = absence_key(kalshi, polyus_snapshot)
+    with connection(path, write=True) as db:
+        if not absent:
+            db.execute(f"DELETE FROM market_absences WHERE {ABSENCE_FILTER}", key)
+            return
+        matches = {row["polyus_market_uid"]: row for row in db.execute(
+            "SELECT * FROM reviews WHERE kalshi_market_uid = ? AND label = 'match'", (key[0],),
+        )}
+        markets = catalog.full_rows("POLYUS", matches)
+        if any(review_state(matches[uid], kalshi, market) == "match" for uid, market in markets.items()):
+            raise ValueError("A matching Polymarket US pair is already saved in this snapshot.")
+        db.execute("""
+            INSERT INTO market_absences VALUES (?, ?, ?, ?)
+            ON CONFLICT (kalshi_market_uid, polyus_catalog_sha256, kalshi_fingerprint)
+            DO UPDATE SET reviewed_at = excluded.reviewed_at
+        """, (*key, now()))
+
+
+def save_decision(path, kalshi, polyus, label, polyus_snapshot=None):
     if label not in ("match", "no_match"):
         raise ValueError("Choose match or no match.")
     values = (kalshi["market_uid"], polyus["market_uid"], label, now(), *pair_fingerprints(kalshi, polyus))
@@ -90,6 +159,9 @@ def save_decision(path, kalshi, polyus, label):
                 kalshi_fingerprint = excluded.kalshi_fingerprint,
                 polyus_fingerprint = excluded.polyus_fingerprint
         """, values)
+        if label == "match" and polyus_snapshot is not None:
+            db.execute(f"DELETE FROM market_absences WHERE {ABSENCE_FILTER}",
+                       absence_key(kalshi, polyus_snapshot))
 
 
 def benchmarks(path):

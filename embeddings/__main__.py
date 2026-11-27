@@ -10,7 +10,7 @@ from collector.config import DATA
 from evaluation.retrieval.evaluate import evaluate
 from evaluation.retrieval.reviews import DEFAULT_DB
 
-from .run import Run, create_run
+from .run import DEFAULT_MODEL, MODEL_REVISIONS, Run, create_run, resume_run
 
 
 def main():
@@ -19,13 +19,16 @@ def main():
     parser.add_argument("--reviews-db", type=Path, default=DEFAULT_DB)
     commands = parser.add_subparsers(dest="command", required=True)
     retrieve = commands.add_parser("run", help="Freeze catalogs and retrieve candidates")
-    retrieve.add_argument("--run-id")
+    run_mode = retrieve.add_mutually_exclusive_group()
+    run_mode.add_argument("--run-id")
+    run_mode.add_argument("--resume", metavar="RUN_ID", help="Continue a checkpointed run with its original settings")
     source = retrieve.add_mutually_exclusive_group()
     source.add_argument("--catalog-dir", type=Path)
     source.add_argument("--snapshot-run", help="Reuse the catalog from a completed run")
     retrieve.add_argument("--device", help="Sentence Transformers device, such as cpu or mps")
-    retrieve.add_argument("--batch-size", type=int, default=16)
-    retrieve.add_argument("--truncation", choices=("head", "head-tail"), default="head")
+    retrieve.add_argument("--model", choices=MODEL_REVISIONS, help=f"Embedding model (default: {DEFAULT_MODEL})")
+    retrieve.add_argument("--batch-size", type=int, help="Model batch size (default: 16)")
+    retrieve.add_argument("--truncation", choices=("head", "head-tail"), help="Truncation strategy (default: head)")
     review = commands.add_parser("review", help="Start a localhost review server")
     review.add_argument("--run-id", required=True)
     review.add_argument("--port", type=int, default=8765)
@@ -37,7 +40,15 @@ def main():
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     try:
         if args.command == "run":
-            if args.batch_size < 1:
+            if args.resume is not None:
+                if any(value is not None for value in (
+                    args.catalog_dir, args.snapshot_run, args.device, args.batch_size, args.truncation, args.model,
+                )):
+                    raise ValueError("Resume uses the saved catalog and settings. Supply only --resume RUN_ID.")
+                print(resume_run(args.runs_dir, args.resume))
+                return 0
+            batch_size = args.batch_size if args.batch_size is not None else 16
+            if batch_size < 1:
                 raise ValueError("Batch size must be positive")
             if args.snapshot_run:
                 source_run = Run(args.runs_dir, args.snapshot_run)
@@ -45,7 +56,8 @@ def main():
                 del source_run
             else:
                 catalog_dir = args.catalog_dir or DATA / "market_catalog" / "current"
-            print(create_run(args.runs_dir, catalog_dir, args.run_id, args.device, args.batch_size, args.truncation))
+            print(create_run(args.runs_dir, catalog_dir, args.run_id, args.device,
+                             batch_size, args.truncation or "head", args.model or DEFAULT_MODEL))
         elif args.command == "review":
             from evaluation.retrieval.browser import server_for
 

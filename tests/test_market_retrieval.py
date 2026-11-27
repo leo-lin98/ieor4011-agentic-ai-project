@@ -1,12 +1,15 @@
+import fcntl
 import io
 import os
 import re
 import tempfile
 import unittest
 from concurrent.futures import ThreadPoolExecutor
+from html import unescape
 from pathlib import Path
 from types import SimpleNamespace
-from urllib.parse import urlencode
+from unittest.mock import patch
+from urllib.parse import unquote, urlencode
 
 import numpy as np
 import pyarrow as pa
@@ -14,9 +17,9 @@ import pyarrow.parquet as pq
 
 from collector.schemas import MARKET_CATALOG
 from embeddings.catalog import Catalog, input_parts
-from embeddings.run import CANDIDATES, Run, create_run, rank_batches, reserve_run, validate_candidates
+from embeddings.run import CANDIDATES, Run, create_run, rank_batches, reserve_run, resume_run, validate_candidates
 from evaluation.retrieval import reviews
-from evaluation.retrieval.browser import ReviewApp, review_handler, url
+from evaluation.retrieval.browser import ReviewApp, market_card, review_handler, url
 from evaluation.retrieval.evaluate import evaluate
 
 
@@ -52,6 +55,107 @@ def browser_request(handler, target, data=None):
 
 
 class RetrievalTests(unittest.TestCase):
+    def test_catalog_search_opens_and_reviews_unranked_contract(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            source, db = root / "catalog", root / "reviews.sqlite"
+            kalshi = market("KALSHI", "q")
+            polyus = [
+                market("POLYUS", "ranked", market_title="Ranked solar election"),
+                market("POLYUS", "outside", event_title="Solar election", market_title="Found by search"),
+                market("POLYUS", "filtered", category="Politics", yes_title="Solar election", market_title="Filtered result"),
+                market("POLYUS", "inactive", status_canonical="closed", event_title="Solar election", market_title="Closed result"),
+                market("POLYUS", "excluded", market_title="Unrelated"),
+            ]
+            save_catalog(source, [kalshi], polyus)
+            run = SimpleNamespace(
+                id="run-001", catalog=Catalog(source),
+                results=lambda uids: [{"polyus_market_uid": "POLYUS:ranked", "similarity_score": 1.0}],
+                metadata={"created_at": "2026-11-19T00:00:00+00:00",
+                          "catalog": {"platforms": {"POLYUS": {"sha256": "snapshot"}}}},
+            )
+            app = ReviewApp(run, db)
+            handler = review_handler(app)
+            with patch("evaluation.retrieval.browser.SEARCH_PAGE_SIZE", 2):
+                first = browser_request(handler, url(kalshi="q", keywords="Solar ELECTION"))
+                panel = first.split('id="catalog-search"', 1)[1].split("</details>", 1)[0]
+                self.assertIn("Showing 1–2 of 3 contracts", panel)
+                self.assertNotIn("Ranked solar election", panel)
+                self.assertNotIn("Unrelated", panel)
+                self.assertIn("Filtered by sports category", panel)
+                self.assertIn("was inactive", panel)
+                more = unescape(re.search(r'<a href="([^"]+)">More results</a>', panel)[1])
+                second = browser_request(handler, more.partition("#")[0])
+                self.assertIn("Showing 3–3 of 3 contracts", second)
+                self.assertIn("outside top 10", second)
+                target = unescape(re.search(r'<a href="([^"]+)">Found by search</a>', second)[1])
+                path, _, fragment = target.partition("#")
+                page = browser_request(handler, path)
+                self.assertEqual(unquote(fragment), "contract-POLYUS:outside")
+                self.assertIn('id="contract-POLYUS:outside"', page)
+                self.assertIn("Manual lookup · outside top 10", page)
+                self.assertIn('value="Solar ELECTION"', page)
+                submitted = browser_request(handler, "/", {
+                    "action": "decision", "csrf": app.csrf, "kalshi": "q", "polyus": "outside",
+                    "manual": "outside", "label": "match", "keywords": "Solar ELECTION", "search_page": "2",
+                })
+                self.assertIn("303 See Other", submitted)
+                self.assertIn("keywords=Solar+ELECTION&search_page=2#review-", submitted)
+                self.assertEqual(reviews.decisions(db, "KALSHI:q")["POLYUS:outside"]["label"], "match")
+
+    def test_market_cards_collapse_rules_ids_and_links_by_default(self):
+        for platform, rule_field in (("KALSHI", "rules_primary"), ("POLYUS", "description")):
+            with self.subTest(platform=platform):
+                card = market_card(market(
+                    platform, "contract-01", yes_title="The stated outcome",
+                    market_url="https://example.com/market", **{rule_field: "Complete settlement rule"},
+                ))
+                summary, disclosure = card.split('<details class="market-details"><summary>More details</summary>')
+                for value in ("Test contract", "Test event", "The stated outcome"):
+                    self.assertIn(value, summary)
+                for value in ("contract-01", "Complete settlement rule", "https://example.com/market"):
+                    self.assertNotIn(value, summary)
+                    self.assertIn(value, disclosure)
+
+    def test_review_queue_shuffles_and_skips_completed_contracts(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            source, db = root / "catalog", root / "reviews.sqlite"
+            kalshi = [market("KALSHI", contract) for contract in "abcde"]
+            polyus = market("POLYUS", "p")
+            save_catalog(source, kalshi, [polyus])
+            run = SimpleNamespace(
+                id="run-001", catalog=Catalog(source), results=lambda uids: [],
+                metadata={"created_at": "2026-11-19T00:00:00+00:00",
+                          "catalog": {"platforms": {"POLYUS": {"sha256": "snapshot"}}}},
+            )
+            app = ReviewApp(run, db)
+            first, second, third, fourth, fifth = app.queries
+            self.assertNotEqual(app.queries, sorted(app.queries))
+            self.assertEqual(app.queries, ReviewApp(run, db).queries)
+
+            def choose(action, uid, **data):
+                return app.submit({"csrf": app.csrf, "action": action, "kalshi": uid, **data})
+
+            choose("review_complete", second, complete="1")
+            choose("market_absence", third, absent="1")
+            choose("decision", fourth, polyus="p", label="no_match")
+            page = app.render({"kalshi": first})
+            self.assertIn("3 remaining", page)
+            self.assertIn(f'href="{url(kalshi=fourth)}">Next</a>', page)
+            self.assertIn("Review complete for this run.", app.render({"kalshi": second}))
+
+            choose("review_complete", first, complete="1")
+            self.assertIn(f'name="kalshi" value="{fourth}"', app.render({}))
+            choose("review_complete", second, complete="0")
+            self.assertIn(f'name="kalshi" value="{second}"', app.render({}))
+            choose("market_absence", third, absent="0")
+            self.assertIn(f'href="{url(kalshi=third)}">Next</a>', app.render({"kalshi": second}))
+            self.assertIn(f'href="{url(kalshi=fifth)}">Next</a>', app.render({"kalshi": fourth}))
+
+            alternate = SimpleNamespace(**{**vars(run), "metadata": {**run.metadata, "created_at": "another run"}})
+            self.assertIn("5 remaining", ReviewApp(alternate, db).render({}))
+
     def test_reservations_are_increasing_and_thread_safe(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
@@ -106,6 +210,81 @@ class RetrievalTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "row run ID"):
                 validate_candidates(path, "run-001", 1)
 
+    def test_resume_reuses_embeddings_rank_blocks_and_frozen_catalog(self):
+        class TestEmbedder:
+            dimension = 2
+            limit = 8
+
+            def __init__(self, device, batch_size, truncation, model):
+                self.device = device or "cpu"
+                self.model = model
+
+            def settings(self):
+                return {"device": self.device, "id": self.model}
+
+            def encode(self, platform, markets, uids):
+                if state["interrupt_encoding"] and len(calls) == 1:
+                    raise KeyboardInterrupt
+                calls.append((platform, tuple(uids)))
+                return np.tile([1, 0], (len(uids), 1)), {uid: 9 for uid in uids}
+
+        def interrupted_ranking(*args, **kwargs):
+            rows = rank_batches(*args, **kwargs)
+            yield next(rows)
+            raise KeyboardInterrupt
+
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            source, runs = root / "source", root / "runs"
+            kalshi = [market("KALSHI", contract) for contract in "abc"]
+            polyus = [market("POLYUS", "match"), market("POLYUS", "other")]
+            save_catalog(source, kalshi, polyus)
+            calls = []
+            state = {"interrupt_encoding": True}
+            with (patch("embeddings.run.Embedder", TestEmbedder),
+                  patch("embeddings.run.EMBED_CHUNK", 2),
+                  patch("embeddings.run.RANK_CHUNK", 1)):
+                with self.assertRaises(KeyboardInterrupt):
+                    create_run(runs, source, None, None, 2, "head", model="nomic")
+                work = runs / ".run-001.checkpoint"
+                self.assertTrue(work.is_dir())
+                self.assertFalse((runs / "run-001").exists())
+                with (work / ".lock").open("a") as lock:
+                    fcntl.flock(lock, fcntl.LOCK_EX)
+                    with self.assertRaisesRegex(ValueError, "already running"):
+                        resume_run(runs, "run-001")
+
+                # Change the live catalog in place while the run is paused.
+                save_catalog(source, [market("KALSHI", "new")], polyus)
+                state["interrupt_encoding"] = False
+                with patch("embeddings.run.rank_batches", interrupted_ranking):
+                    with self.assertRaises(KeyboardInterrupt):
+                        resume_run(runs, "run-001")
+                expected_calls = [("KALSHI", ("KALSHI:a", "KALSHI:b")), ("KALSHI", ("KALSHI:c",)),
+                                  ("POLYUS", ("POLYUS:match", "POLYUS:other"))]
+                self.assertEqual(calls, expected_calls)
+                with patch("embeddings.run.rank_batches", wraps=rank_batches) as rank:
+                    path = resume_run(runs, "run-001")
+                    self.assertEqual(rank.call_args.kwargs["skip"], 1)
+                self.assertEqual(calls, expected_calls)
+                self.assertFalse(work.exists())
+                run = Run(runs, path.name)
+                self.assertEqual(run.metadata["model"]["id"], "nomic")
+                self.assertEqual(run.metadata["candidate_rows"], 6)
+                self.assertEqual(run.metadata["truncation"]["market_counts"], {"KALSHI": 3, "POLYUS": 2})
+                self.assertNotIn("KALSHI:new", run.catalog.markets["KALSHI"])
+
+                comparison_path = create_run(runs, run.catalog.directory, None, None, 2, "head")
+                comparison = Run(runs, comparison_path.name)
+                self.assertEqual(run.metadata["catalog"], comparison.metadata["catalog"])
+                for platform in ("KALSHI", "POLYUS"):
+                    self.assertTrue(run.catalog.path(platform).samefile(comparison.catalog.path(platform)))
+                self.assertEqual(len(list((runs / ".catalogs").glob("*.parquet"))), 2)
+                uids = set(run.catalog.groups["KALSHI"])
+                self.assertEqual(
+                    run.results(uids), [dict(row, run_id=run.id) for row in comparison.results(uids)]
+                )
+
     @unittest.skipUnless(os.getenv("EMBEDDINGS_MODEL_SMOKE") == "1", "requires cached EmbeddingGemma")
     def test_cached_model_browser_and_frozen_benchmark(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -135,18 +314,41 @@ class RetrievalTests(unittest.TestCase):
                 response = browser_request(handler, "/", data)
                 self.assertIn("303 See Other", response)
                 location = re.search(r"Location: ([^\r\n]+)", response)[1]
-                return browser_request(handler, location)
+                path, _, anchor = location.partition("#")
+                page = browser_request(handler, path)
+                if action in ("decision", "add_pair") and params.get("manual"):
+                    self.assertEqual(unquote(anchor), f'review-POLYUS:{params["polyus"]}')
+                    self.assertIn(f'id="{unquote(anchor)}"', page)
+                return page
 
             self.assertIn("outside top 10", page)
             self.assertIn("Kalshi series page", page)
             self.assertIn("Polymarket US event page", page)
             self.assertIn(tail, page)
+            self.assertIn("No corresponding Polymarket US market</button>", page)
+            page = submit("market_absence", absent="1")
+            self.assertIn("No corresponding Polymarket US market recorded for this snapshot.", page)
+            snapshot = run.metadata["catalog"]["platforms"]["POLYUS"]["sha256"]
+            self.assertIsNotNone(reviews.market_absence(db, query, snapshot))
+            self.assertIsNone(reviews.market_absence(db, query, "different snapshot"))
+            self.assertIsNone(reviews.market_absence(db, {**query, "rules_primary": "Changed."}, snapshot))
+            page = submit("decision", polyus="11", manual="11", label="no_match")
+            self.assertIn("Clear no-market finding", page)
+            page = submit("market_absence", absent="0")
+            self.assertNotIn("Clear no-market finding", page)
+            submit("market_absence", absent="1")
             self.assertIn("first-review", submit("create", name="first-review"))
             for contract in ("00", "11", "filtered"):
                 page = submit("decision", benchmark="first-review", polyus=contract, manual=contract, label="match")
+                self.assertNotIn("Clear no-market finding", page)
                 self.assertIn("Add to benchmark", page)
                 submit("add_pair", benchmark="first-review", polyus=contract, manual=contract,
                        independent="1" if contract != "00" else "")
+            response = browser_request(handler, "/", {
+                "action": "market_absence", "csrf": csrf, "kalshi": "q", "absent": "1",
+            })
+            self.assertIn("400 Bad Request", response)
+            self.assertIn("A matching Polymarket US pair is already saved", response)
             submit("freeze", benchmark="first-review")
             submit("decision", benchmark="first-review", polyus="11", label="no_match")
             report = evaluate(run, db, "first-review", comparison)

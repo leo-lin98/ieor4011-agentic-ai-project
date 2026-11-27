@@ -60,28 +60,78 @@ the last row per `market_uid`.
 
 ## Contract retrieval and review
 
-Install the embedding dependencies and cache the pinned model once. Accept the
-EmbeddingGemma license on Hugging Face and authenticate before caching it.
+From the repository root, use the repository's Python environment. Create
+`.venv` with `python -m venv .venv` if it is missing, and install the
+embedding dependencies there.
 
 ```bash
-pip install -r embeddings/requirements.txt
-hf download google/embeddinggemma-300m --revision 57c266a740f537b4dc058e1b0cda161fd15afa75
-python -m embeddings run
+.venv/bin/python -m pip install -r embeddings/requirements.txt
+```
+
+If you need to cache the model, accept the EmbeddingGemma license on Hugging
+Face, authenticate with `.venv/bin/hf auth login`, and download the pinned revision.
+
+```bash
+.venv/bin/hf download google/embeddinggemma-300m --revision 57c266a740f537b4dc058e1b0cda161fd15afa75
+```
+
+Smoke-test the workflow on a small fixture, then run it on the saved catalog.
+
+```bash
+EMBEDDINGS_MODEL_SMOKE=1 .venv/bin/python -m unittest discover -s tests -v
+.venv/bin/python -m embeddings run
 ```
 
 The run command embeds the open contracts in the saved T1 catalogs using the
 catalog timestamps as the cutoff. It assigns the next run ID automatically and
 prints the completed directory. Each run keeps its frozen inputs, metadata, and
-candidate pairs together. The model runs locally from the cache.
+candidate pairs together. Frozen catalogs with identical content share one
+physical copy via hard links. The model runs locally from the cache.
+
+Press Ctrl-C to pause a run once it prints a resume command. Continue with
+the same run ID to reuse its saved embedding batches, ranked blocks, and
+original settings.
+
+```bash
+.venv/bin/python -m embeddings run --resume run-001
+```
+
+Incomplete runs stay in hidden checkpoint directories. Checkpoints store the
+embeddings and ranking progress on disk. Retrieval removes the checkpoint
+after publishing the validated results for review.
+
+### Try a smaller embedding model
+
+`--model nomic` uses Nomic Embed Text v1.5 with a 1,024-token input limit.
+Cache the pinned revision once, then start a separate run.
+
+```bash
+.venv/bin/hf download nomic-ai/nomic-embed-text-v1.5 \
+  --revision e9b6763023c676ca8431644204f50c2b100d9aab \
+  --include '*.json' --include model.safetensors --include vocab.txt
+.venv/bin/python -m embeddings run --model nomic
+```
+
+Add `--snapshot-run run-001` with a completed run ID to reuse its exact
+catalog. A resumed run uses its original model and settings.
+
+### Review and evaluate a run
 
 Open the URL printed by the review command.
 
 ```bash
-python -m embeddings review --run-id run-001
+.venv/bin/python -m embeddings review --run-id run-001
 ```
 
 Compare the settlement conditions before marking a pair **Match** or **No
-match**. Use the Polymarket US ID lookup to review a pair outside the top 10.
+match**. Open **Find more Polymarket US contracts** to search titles, Yes
+outcomes, and contract IDs in the frozen catalog beyond the top 10. Select a
+result to review it, or use the ID lookup when you already know the contract ID.
+A Kalshi contract can also be marked **No corresponding Polymarket US market**
+for the frozen catalog if you have checked beyond the ranked candidates.
+Kalshi contracts appear in a fixed shuffled order for each run. The review
+queue skips contracts with a saved no-market finding or **Mark review complete**.
+Use the contract ID lookup and **Reopen review** to revisit completed work.
 A match means the conditions permit an arbitrage payoff at suitable prices.
 Order books and fees are checked separately. Review decisions are shared in
 `evaluation/retrieval/reviews.sqlite`, alongside the review and evaluation code.
@@ -92,12 +142,12 @@ of retrieval, including eligible missed pairs, then freeze the set to keep it
 fixed for evaluation.
 
 ```bash
-python -m embeddings evaluate --run-id run-001 --benchmark first-review
-python -m embeddings run --snapshot-run run-001 --truncation head-tail
-python -m embeddings evaluate --run-id run-001 --benchmark first-review --compare-run run-002
+.venv/bin/python -m embeddings evaluate --run-id run-001 --benchmark first-review
+.venv/bin/python -m embeddings run --snapshot-run run-001 --truncation head-tail
+.venv/bin/python -m embeddings evaluate --run-id run-001 --benchmark first-review --compare-run run-002
 ```
 
-Use the run IDs printed by the corresponding commands. A failed run may leave
-a gap in the numbering. Pair recall counts the fraction of eligible benchmark
+Use the run IDs printed by the corresponding commands. Abandoned runs may
+leave gaps in the numbering. Pair recall counts the fraction of eligible benchmark
 pairs retrieved. Query hit rate counts the fraction of eligible benchmark
 queries with at least one retrieved match.

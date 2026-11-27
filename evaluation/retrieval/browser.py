@@ -1,19 +1,25 @@
 """Local browser for reviewing candidate contracts and curating benchmarks."""
 
 import logging
+import random
+import re
 import secrets
+from bisect import bisect_left, bisect_right
 from html import escape
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import parse_qs, urlencode, urlsplit
+from urllib.parse import parse_qs, quote, urlencode, urlsplit
 
-from embeddings.catalog import RULE_DETAILS
+from embeddings.catalog import RULE_DETAILS, rule_fingerprint
 
 from . import reviews
 
 log = logging.getLogger(__name__)
 STATUS = {"match": "Match", "no_match": "No match", "stale": "Rules changed · review again",
           "unreviewed": "Unreviewed"}
+SEARCH_PAGE_SIZE = 20
+SEARCH_LIMIT = 160
+SEARCH_WORD = re.compile(r"[^\W_]+")
 STYLE = """
 :root {color-scheme: light; font: 16px/1.5 system-ui, sans-serif; color: #20292b; background: #f4f5f2}
 body {margin: 0 auto; max-width: 1360px; padding: 1.5rem}
@@ -30,6 +36,10 @@ article, .panel {border: 1px solid #c8d1cd; border-radius: .5rem; padding: 1rem;
 article {margin-bottom: 1rem} .query {position: sticky; top: 1rem; max-height: calc(100vh - 3.5rem); overflow: auto}
 p, dd, code {overflow-wrap: anywhere} dt {font-weight: 650} dd {margin: 0 0 .6rem}
 .rules {white-space: pre-wrap} .notice {padding: .65rem; background: #e4eee8}
+.market-details > summary {min-height: 1.5rem; cursor: pointer; color: #155946}
+.decision, .contract, #catalog-search {scroll-margin-top: 1rem}
+#catalog-search {margin-bottom: 1rem}
+#catalog-search li {margin-bottom: .5rem; overflow-wrap: anywhere}
 @media (max-width: 800px) {.contracts {grid-template-columns: 1fr} .query {position: static; max-height: none}}
 """
 
@@ -53,14 +63,49 @@ def link(value, label):
     return ""
 
 
-def market_details(market):
+def search_words(value):
+    return SEARCH_WORD.findall(value.casefold())
+
+
+def catalog_matches(markets, keywords, ranked):
+    query_words = search_words(keywords)
+    terms = set(query_words)
+    if not terms:
+        return []
+    phrase = " ".join(query_words)
+    matches = []
+    for uid, market in markets.items():
+        if uid in ranked:
+            continue
+        fields = (uid, market.get("market_title"), market.get("yes_title"), market.get("event_title"))
+        words = [search_words(value or "") for value in fields]
+        if terms.issubset(word for field in words for word in field):
+            phrase_match = any(f" {phrase} " in f" {' '.join(field)} " for field in words)
+            matches.append((not phrase_match, uid))
+    return [uid for _, uid in sorted(matches)]
+
+
+def ranking_status(catalog, kalshi, polyus):
+    excluded = catalog.exclusion(kalshi, polyus)
+    labels = {
+        "sports_mismatch": "Filtered by sports category",
+        "polyus_not_open": "Polymarket US contract was inactive at snapshot time",
+        "kalshi_not_open": "Kalshi contract was inactive at snapshot time",
+        "polyus_category_conflict": "Polymarket US event has conflicting categories",
+        "kalshi_category_conflict": "Kalshi event has conflicting categories",
+    }
+    return labels.get(excluded, excluded.replace("_", " ") if excluded else "outside top 10")
+
+
+def market_card(market):
     platform = market["platform"]
-    title = market.get("market_title") or market.get("market_question") or market["market_uid"]
+    title = market.get("market_title") or market.get("market_question") or "Untitled contract"
+    event = market.get("event_title") or "Unavailable"
+    yes = market.get("yes_title") or market.get("yes_side_label") or "Unavailable"
     fields = [
-        ("Event", market.get("event_title")),
         ("Contract ID", market.get("native_market_id") or market["market_uid"].split(":", 1)[1]),
         ("Market UID", market["market_uid"]), ("Event UID", market.get("event_uid")),
-        ("Yes outcome", market.get("yes_title")), ("Yes side label", market.get("yes_side_label")),
+        ("Yes side label", market.get("yes_side_label")),
         ("No outcome", market.get("no_title")), ("No side label", market.get("no_side_label")),
     ]
     details = "".join(f"<dt>{esc(label)}</dt><dd>{esc(value)}</dd>" for label, value in fields if value)
@@ -74,16 +119,25 @@ def market_details(market):
     }
     links = " · ".join(filter(None, (link(market[field], label) for field, label in labels.items() if market.get(field))))
     rules_html = f"<dl>{rules}</dl>" if rules else "<p>No settlement text in this snapshot.</p>"
-    return f"<h3>{esc(title)}</h3><dl>{details}</dl><h4>Settlement rules</h4>{rules_html}<p>{links}</p>"
+    links_html = f"<p>{links}</p>" if links else ""
+    return (
+        f"<h3>{esc(title)}</h3><dl><dt>Event title</dt><dd>{esc(event)}</dd>"
+        f"<dt>Yes outcome</dt><dd>{esc(yes)}</dd></dl>"
+        '<details class="market-details"><summary>More details</summary>'
+        f"<dl>{details}</dl><h4>Settlement rules</h4>{rules_html}{links_html}</details>"
+    )
 
 
 class ReviewApp:
     def __init__(self, run, db_path):
         self.run = run
         self.db = db_path
+        self.run_key = (run.id, run.metadata["created_at"])
+        self.polyus_snapshot = run.metadata["catalog"]["platforms"]["POLYUS"]["sha256"]
         reviews.init_db(db_path)
         self.csrf = secrets.token_urlsafe(32)
         self.queries = sorted(run.catalog.groups["KALSHI"])
+        random.Random(":".join(self.run_key)).shuffle(self.queries)
         self.positions = {uid: index for index, uid in enumerate(self.queries)}
 
     def find_uid(self, platform, entered):
@@ -99,10 +153,40 @@ class ReviewApp:
         fields = {"action": action, "csrf": self.csrf, **params}
         return f'<form method="post">{"".join(hidden(k, v) for k, v in fields.items())}{body}</form>'
 
-    def candidate(self, kalshi, polyus, label, benchmark, manual, status, selected):
+    def query_controls(self, kalshi, benchmark, manual, absent, completed, **search_state):
+        params = {"kalshi": kalshi["market_uid"], "benchmark": benchmark, "manual": manual, **search_state}
+        completion = ""
+        if completed:
+            completion = '<p>Review complete for this run.</p>' + self.form(
+                "review_complete", '<button name="complete" value="0">Reopen review</button>', **params,
+            )
+        elif not absent:
+            completion = self.form(
+                "review_complete", '<button name="complete" value="1">Mark review complete</button>', **params,
+            )
+        if absent:
+            text = "<p>No corresponding Polymarket US market recorded for this snapshot.</p>"
+            button = '<button name="absent" value="0">Clear no-market finding</button>'
+        else:
+            text = ""
+            button = '<button name="absent" value="1">No corresponding Polymarket US market</button>'
+        return (
+            f'<div class="decision" id="query-review">{completion}'
+            f'{text}{self.form("market_absence", button, **params)}</div>'
+        )
+
+    def pending_reviews(self, completed, absences):
+        absent_markets = self.run.catalog.full_rows("KALSHI", {uid for uid, _ in absences})
+        confirmed = {
+            uid for uid, market in absent_markets.items() if (uid, rule_fingerprint(market)) in absences
+        }
+        done = completed | confirmed
+        return [index for index, uid in enumerate(self.queries) if uid not in done]
+
+    def candidate(self, kalshi, polyus, label, benchmark, manual, status, selected, **search_state):
         params = {
             "kalshi": kalshi["market_uid"], "polyus": polyus["market_uid"],
-            "benchmark": benchmark, "manual": manual,
+            "benchmark": benchmark, "manual": manual, **search_state,
         }
         controls = (
             '<div class="controls"><button class="primary" name="label" value="match">Match</button>'
@@ -115,8 +199,59 @@ class ReviewApp:
                 'Found independently of retrieval</label><button>Add to benchmark</button></div>', **params,
             )
         return (
-            f'<article><p><strong>{esc(label)}</strong> · {esc(STATUS[status])}</p>'
-            f'{market_details(polyus)}{form}</article>'
+            f'<article class="contract" id="contract-{esc(polyus["market_uid"])}">'
+            f'<p><strong>{esc(label)}</strong></p>{market_card(polyus)}'
+            f'<div class="decision" id="review-{esc(polyus["market_uid"])}">'
+            f'<p>Decision: <strong>{esc(STATUS[status])}</strong></p>{form}</div></article>'
+        )
+
+    def catalog_search(self, kalshi, benchmark, manual, ranked, keywords="", search_page=""):
+        filters = (hidden("kalshi", kalshi) + hidden("benchmark", benchmark) + hidden("polyus", manual))
+        form = (
+            f'<form action="/#catalog-search" method="get" class="controls">{filters}'
+            f'<label>Keywords <input type="search" name="keywords" maxlength="{SEARCH_LIMIT}" '
+            f'value="{esc(keywords)}" required></label>'
+            '<button>Search catalog</button></form>'
+        )
+        results = ""
+        if keywords:
+            markets = self.run.catalog.markets["POLYUS"]
+            matches = catalog_matches(markets, keywords, ranked)
+            if matches:
+                page = int(search_page) if search_page.isascii() and search_page.isdecimal() and len(search_page) < 8 else 1
+                last_page = (len(matches) - 1) // SEARCH_PAGE_SIZE + 1
+                page = min(max(page, 1), last_page)
+                start = (page - 1) * SEARCH_PAGE_SIZE
+                end = min(start + SEARCH_PAGE_SIZE, len(matches))
+                items = []
+                for uid in matches[start:end]:
+                    market = markets[uid]
+                    title = market.get("market_title") or market.get("yes_title") or uid
+                    event = market.get("event_title")
+                    status = ranking_status(self.run.catalog, kalshi, uid)
+                    target = url(kalshi=kalshi, benchmark=benchmark, polyus=uid, keywords=keywords, search_page=page)
+                    target += "#contract-" + quote(uid, safe="")
+                    event_html = f" · {esc(event)}" if event and event != title else ""
+                    items.append(f'<li><a href="{esc(target)}">{esc(title)}</a>{event_html} · {esc(status)}</li>')
+                pages = []
+                for number, label in ((page - 1, "Previous results"), (page + 1, "More results")):
+                    if 1 <= number <= last_page:
+                        target = url(kalshi=kalshi, benchmark=benchmark, polyus=manual, keywords=keywords,
+                                     search_page=number) + "#catalog-search"
+                        pages.append(f'<a href="{esc(target)}">{label}</a>')
+                results = (
+                    f"<p>Showing {start + 1:,}–{end:,} of {len(matches):,} contracts</p>"
+                    f"<ul>{''.join(items)}</ul>"
+                    f'<nav aria-label="Catalog search results">{"".join(pages)}</nav>'
+                )
+            else:
+                results = "<p>No additional contracts matched these keywords.</p>"
+        expanded = " open" if keywords else ""
+        return (
+            f'<details class="panel" id="catalog-search"{expanded}>'
+            '<summary>Find more Polymarket US contracts</summary>'
+            '<p>Search the frozen catalog by title, Yes outcome, or contract ID.</p>'
+            f"{form}{results}</details>"
         )
 
     def benchmark_panel(self, all_benchmarks, selected, kalshi, manual):
@@ -160,25 +295,32 @@ class ReviewApp:
 
     def render(self, query, error=None):
         benchmark = query.get("benchmark", "")
+        search_state = {
+            "keywords": query.get("keywords", "")[:SEARCH_LIMIT].strip(),
+            "search_page": query.get("search_page", "")[:7],
+        }
         all_benchmarks = reviews.benchmarks(self.db)
         selected = next((row for row in all_benchmarks if row["name"] == benchmark), None)
-        entered = query.get("kalshi", self.queries[0] if self.queries else "")
+        completed, absences = reviews.review_progress(self.db, self.run_key, self.polyus_snapshot)
+        pending = self.pending_reviews(completed, absences)
+        entered = query.get("kalshi", self.queries[pending[0]] if pending else "")
         uid = manual = ""
         try:
             uid = self.find_uid("KALSHI", entered)
             manual = self.find_uid("POLYUS", query.get("polyus", ""))
         except ValueError as exc:
             error = str(exc)
-        navigation = []
-        index = self.positions.get(uid)
-        if index is not None:
-            if index > 0:
-                navigation.append(f'<a href="{esc(url(kalshi=self.queries[index - 1], benchmark=benchmark))}">Previous</a>')
-            navigation.append(f'<span>{index + 1:,} of {len(self.queries):,}</span>')
-            if index + 1 < len(self.queries):
-                navigation.append(f'<a href="{esc(url(kalshi=self.queries[index + 1], benchmark=benchmark))}">Next</a>')
+        index = self.positions.get(uid, -1)
+        previous = bisect_left(pending, index) - 1
+        following = bisect_right(pending, index)
+        navigation = [f'<span>{len(pending):,} remaining</span>']
+        if previous >= 0:
+            navigation.insert(0, f'<a href="{esc(url(kalshi=self.queries[pending[previous]], benchmark=benchmark))}">Previous</a>')
+        if following < len(pending):
+            navigation.append(f'<a href="{esc(url(kalshi=self.queries[pending[following]], benchmark=benchmark))}">Next</a>')
         ranked_html = ""
-        query_html = "<p>Enter a Kalshi contract ID to begin.</p>"
+        query_html = ("<p>Enter a Kalshi contract ID to begin.</p>" if pending else
+                      "<p>No Kalshi contracts remain in the review queue. Enter a contract ID to revisit it.</p>")
         if uid:
             kalshi = self.run.catalog.full_rows("KALSHI", [uid])[uid]
             ranked = self.run.results({uid})
@@ -186,27 +328,33 @@ class ReviewApp:
             polyus_ids = {row["polyus_market_uid"] for row in ranked}
             markets = self.run.catalog.full_rows("POLYUS", polyus_ids | {manual})
             decisions = reviews.decisions(self.db, uid)
-            query_html = f'<article class="query"><h2>Kalshi</h2>{market_details(kalshi)}</article>'
+            absent = (uid, rule_fingerprint(kalshi)) in absences
+            controls = self.query_controls(kalshi, benchmark, manual, absent, uid in completed, **search_state)
+            query_html = f'<article class="query"><h2>Kalshi</h2>{market_card(kalshi)}{controls}</article>'
             for rank, row in enumerate(ranked, 1):
                 polyus_uid = row["polyus_market_uid"]
                 polyus = markets[polyus_uid]
                 status = reviews.review_state(decisions.get(polyus_uid), kalshi, polyus)
                 label = f'#{rank} · cosine {row["similarity_score"]:.6f}'
-                ranked_html += self.candidate(kalshi, polyus, label, benchmark, manual, status, selected)
+                ranked_html += self.candidate(kalshi, polyus, label, benchmark, manual, status, selected, **search_state)
             if not ranked_html:
                 ranked_html = "<p>No ranked candidates for this contract.</p>"
             if manual and manual not in polyus_ids:
                 polyus = markets[manual]
                 status = reviews.review_state(decisions.get(manual), kalshi, polyus)
-                excluded = self.run.catalog.exclusion(uid, manual)
-                label = "Manual lookup" + (f' · {excluded.replace("_", " ")}' if excluded else " · outside top 10")
-                ranked_html = self.candidate(kalshi, polyus, label, benchmark, manual, status, selected) + ranked_html
+                label = f"Manual lookup · {ranking_status(self.run.catalog, uid, manual)}"
+                ranked_html = self.candidate(kalshi, polyus, label, benchmark, manual, status, selected,
+                                             **search_state) + ranked_html
             lookup = (
                 f'<form method="get" class="controls">{hidden("kalshi", uid)}{hidden("benchmark", benchmark)}'
                 f'<label>Polymarket US contract ID <input name="polyus" value="{esc(query.get("polyus", ""))}"></label>'
                 '<button>Look up</button></form>'
             )
-            ranked_html = f'<section aria-label="Polymarket US candidates"><h2>Polymarket US</h2>{lookup}{ranked_html}</section>'
+            search = self.catalog_search(uid, benchmark, manual, polyus_ids, **search_state)
+            ranked_html = (
+                '<section aria-label="Polymarket US candidates"><h2>Polymarket US</h2>'
+                f'{lookup}{search}{ranked_html}</section>'
+            )
         top = (
             f'<header><h1>Market review</h1><strong>{esc(self.run.id)}</strong></header>'
             f'<nav aria-label="Kalshi contracts">{"".join(navigation)}</nav>'
@@ -227,6 +375,7 @@ class ReviewApp:
             raise ValueError("Reload the review page before submitting a form.")
         action = data.get("action")
         name = data.get("benchmark", "")
+        anchor = ""
         if action == "create":
             name = data.get("name", "").strip()
             reviews.create_benchmark(self.db, name)
@@ -234,6 +383,19 @@ class ReviewApp:
             reviews.freeze_benchmark(self.db, name)
         elif action == "remove_pair":
             reviews.remove_benchmark_pair(self.db, name, data["pair_kalshi"], data["pair_polyus"])
+        elif action == "review_complete":
+            uid = self.find_uid("KALSHI", data.get("kalshi", ""))
+            if not uid or data.get("complete") not in ("0", "1"):
+                raise ValueError("Choose a Kalshi contract and a completion action.")
+            reviews.set_review_complete(self.db, self.run_key, uid, data["complete"] == "1")
+            anchor = "#query-review"
+        elif action == "market_absence":
+            uid = self.find_uid("KALSHI", data.get("kalshi", ""))
+            if not uid or data.get("absent") not in ("0", "1"):
+                raise ValueError("Choose a Kalshi contract and a no-market action.")
+            kalshi = self.run.catalog.full_rows("KALSHI", [uid])[uid]
+            reviews.set_market_absence(self.db, kalshi, self.run.catalog, self.polyus_snapshot, data["absent"] == "1")
+            anchor = "#query-review"
         elif action in ("decision", "add_pair"):
             uid = self.find_uid("KALSHI", data.get("kalshi", ""))
             candidate = self.find_uid("POLYUS", data.get("polyus", ""))
@@ -242,12 +404,14 @@ class ReviewApp:
             kalshi = self.run.catalog.full_rows("KALSHI", [uid])[uid]
             polyus = self.run.catalog.full_rows("POLYUS", [candidate])[candidate]
             if action == "decision":
-                reviews.save_decision(self.db, kalshi, polyus, data.get("label"))
+                reviews.save_decision(self.db, kalshi, polyus, data.get("label"), self.polyus_snapshot)
             else:
                 reviews.add_benchmark_pair(self.db, name, kalshi, polyus, data.get("independent") == "1")
+            anchor = "#review-" + quote(candidate, safe="")
         else:
             raise ValueError("Unknown review action.")
-        return url(kalshi=data.get("kalshi"), polyus=data.get("manual"), benchmark=name)
+        return url(kalshi=data.get("kalshi"), polyus=data.get("manual"), benchmark=name,
+                   keywords=data.get("keywords"), search_page=data.get("search_page")) + anchor
 
 
 def review_handler(app):
@@ -292,7 +456,8 @@ def review_handler(app):
                 destination = app.submit(data)
             except (KeyError, ValueError) as exc:
                 query = {"kalshi": data.get("kalshi", ""), "polyus": data.get("manual", ""),
-                         "benchmark": data.get("benchmark", "")}
+                         "benchmark": data.get("benchmark", ""), "keywords": data.get("keywords", ""),
+                         "search_page": data.get("search_page", "")}
                 self.page(HTTPStatus.BAD_REQUEST, app.render(query, str(exc)))
                 return
             self.send_response(HTTPStatus.SEE_OTHER)
