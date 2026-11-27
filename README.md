@@ -72,3 +72,28 @@ px  = pd.read_parquet("data/pricing_snapshots/KALSHI")          # all ticks
 Pricing rows are **change-only**. A market's row is written on its first tick, when anything
 changes, and every 15 minutes as a heartbeat. To get the state at time *t*, forward-fill from
 the last row per `market_uid`.
+
+## Judge non-sports contract pairs
+
+`python -m judge pairs` reads Leo's proposer rows from T2 by default. To run independently of the proposer branch, supply a JSON array containing the contract IDs and proposed relationship.
+
+```json
+[
+  {
+    "kalshi_market_uid": "KALSHI:TICKER",
+    "polyus_market_uid": "POLYUS:ID",
+    "relationship": "identical"
+  }
+]
+```
+
+Use `identical` for YES-to-YES and `complementary` for Kalshi YES-to-Polymarket US NO. The optional `pair_id`, `kalshi_rules_hash`, and `polyus_rules_hash` fields can be copied from T2. Replace the example IDs with contracts in the current collector catalogs.
+
+```bash
+python -m judge pairs --input pairs.json --dry-run
+python -m judge pairs --input pairs.json --model MODEL > reviews.json
+```
+
+The judge selects an economics, politics, or crypto rubric based on the catalog categories and uses the common rubric for other non-sports pairs. It checks each concrete pair's rules, including sources, deadlines, time zones, and exceptional outcomes. Sports pairs use the existing sports template workflow by default. Use `--include-sports` to test individual sports contracts with the pair judge.
+
+Use `ordinary_mapping` to inspect the verdict for ordinary settlement. Share `human_review_questions` with the reviewer. Sports exception findings can share a question when the event, Kalshi secondary rules, and Polymarket US contract and description match. Each pair's scenario remains visible in the question. The `human_review_queue` contains the full evidence for each flagged pair. Each queued result includes the available contract evidence, proposed side mapping, and reason it needs review. A checklist difference or uncertainty goes to this queue when the model names a plausible scenario and explains the effect on both mapped payouts. Generic omissions stay visible in the checklist. Missing or changed core rules and failed judgments also go to the queue. A result of `no_difference_found` is a model finding. The pair judge does not change flags or grant trading approval.
