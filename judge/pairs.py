@@ -6,7 +6,7 @@ import math
 from datetime import datetime, timezone
 from pathlib import Path
 
-from . import core
+from . import core, extraction, scenarios
 from .rubrics.non_sports import for_pair
 
 DIRECTIONS = {"identical": "same", "complementary": "opposite"}
@@ -72,8 +72,10 @@ def _validate_verdict(verdict, rubric, direction):
         raise ValueError("Confidence must be a number between zero and one")
 
 
-def review_pair(pair, catalogs, *, model, judge=None, include_sports=False):
+def review_pair(pair, catalogs, *, model, judge=None, include_sports=False, structured=False, check_order=False):
     """Build a review or queue entry. A missing judge produces a dry-run payload."""
+    if check_order and not structured:
+        raise ValueError("Order checking requires structured review")
     k_uid, p_uid = pair["kalshi_market_uid"], pair["polyus_market_uid"]
     if not k_uid.startswith("KALSHI:") or not p_uid.startswith("POLYUS:"):
         raise ValueError("Expected Kalshi and Polymarket US market IDs")
@@ -115,7 +117,7 @@ def review_pair(pair, catalogs, *, model, judge=None, include_sports=False):
             raise ValueError("Each supplemental excerpt needs source_url, text, and provenance")
         if excerpts:
             payload[side]["supplemental_terms"] = excerpts
-    version = f"pairs.6+{rubric.NAME}.{rubric.VERSION}"
+    version = f"{'structured.2' if structured else 'pairs.6'}+{rubric.NAME}.{rubric.VERSION}"
     result.update({"rubric": rubric.NAME, "prompt_version": version, "model": model, "evidence": payload})
     result["evidence_id"] = hashlib.sha256(
         json.dumps([version, payload], sort_keys=True).encode()
@@ -127,22 +129,64 @@ def review_pair(pair, catalogs, *, model, judge=None, include_sports=False):
     if any(not (row.get(key) or "").strip() for row, key in ((k, "rules_primary"), (p, "description"))):
         return queue("Primary settlement rules are missing for one or both venues.")
 
-    system = core.system_prompt(rubric, None, pair_review=True)
-    schema = core.schema(rubric, pair_review=True)
+    if structured:
+        system, schema = scenarios.plan_protocol(rubric)
+    else:
+        system = core.system_prompt(rubric, None, pair_review=True)
+        schema = core.schema(rubric, pair_review=True)
     if judge is None:
+        if structured:
+            result["extraction_inputs"] = {
+                side: extraction.documents(payload[side]) for side in ("kalshi", "polyus")
+            }
+            result["assessment_protocol"] = {"system": scenarios.ASSESS_SYSTEM, "schema": scenarios.ASSESS_SCHEMA}
         return {**result, "status": "dry_run", "system": system, "schema": schema}
-    try:
-        verdict, _, usage = judge(model, system, payload, schema)
-        _validate_verdict(verdict, rubric, result["direction"])
-    except Exception as error:
-        return queue("Judge call failed or returned an invalid verdict.", error_type=type(error).__name__)
-    reasons = [item["dimension"] for item in verdict["checklist"] if item["payout_scenario"].strip()]
+    if structured:
+        records = {}
+        result["extractions"] = records
+        try:
+            for side in ("kalshi", "polyus"):
+                sources = extraction.documents(payload[side])
+                raw, _, usage = judge(model, extraction.SYSTEM, {"documents": sources}, extraction.SCHEMA)
+                records[side] = {
+                    "documents": sources, "fields": extraction.validate(raw, sources), "usage": usage,
+                }
+        except Exception as error:
+            return queue(f"Independent extraction failed for {side}.",
+                         error_type=type(error).__name__, error_detail=str(error) if isinstance(error, ValueError) else None)
+        checks = extraction.compare_terms(records["kalshi"]["fields"], records["polyus"]["fields"], result["direction"])
+        result["literal_checks"] = checks
+        try:
+            judgment = scenarios.compare(
+                model, judge, rubric, result["direction"], payload, records, checks, check_order
+            )
+        except Exception as error:
+            return queue("Scenario comparison failed or returned unverified evidence.",
+                         error_type=type(error).__name__, error_detail=str(error) if isinstance(error, ValueError) else None)
+    else:
+        try:
+            verdict, _, usage = judge(model, system, payload, schema)
+            _validate_verdict(verdict, rubric, result["direction"])
+        except Exception as error:
+            return queue("Judge call failed or returned an invalid verdict.", error_type=type(error).__name__)
+        judgment = {"verdict": verdict, "usage": usage}
+
+    verdict = judgment["verdict"]
+    reasons = list(dict.fromkeys(item["dimension"] for item in verdict["checklist"] if item["payout_scenario"].strip()))
+    if structured:
+        reasons.extend(f"Different explicit {field} literals require verification."
+                       for field, check in result["literal_checks"].items() if check["status"] == "different_literal")
+    order_check = judgment.get("order_check", {}).get("status")
+    if order_check == "disagrees":
+        reasons.append("The assessed payout changed with the venue order reversed.")
+    elif order_check == "failed":
+        reasons.append("The reversed-order judgment could not be verified.")
     if verdict["verdict"] != "identical":
         reasons.append(verdict["verdict"])
-    if reasons and verdict["human_review_question"].strip():
+    if reasons and verdict.get("human_review_question", "").strip():
         reasons.append(verdict["human_review_question"])
     return {
-        **result, "verdict": verdict, "usage": usage, "review_reasons": reasons,
+        **result, **judgment, "review_reasons": reasons,
         "ordinary_mapping": verdict["ordinary_mapping"],
         "status": "needs_human_review" if reasons else "no_difference_found",
     }
@@ -223,9 +267,13 @@ def main(argv=None):
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--include-sports", action="store_true",
                         help="Review sports pairs with contract-level payout scenarios")
+    parser.add_argument("--structured", action="store_true", help="Extract and validate each venue's rules first")
+    parser.add_argument("--check-order", action="store_true", help="Reassess the same scenarios in reverse venue order")
     args = parser.parse_args(argv)
     if args.limit is not None and args.limit < 1:
         parser.error("--limit must be positive")
+    if args.check_order and not args.structured:
+        parser.error("--check-order requires --structured")
     try:
         if args.input:
             pairs = json.loads(args.input.read_text())
@@ -245,7 +293,8 @@ def main(argv=None):
             return core.call_model(client, model, system, payload, schema)
 
         reviews = [review_pair(pair, catalogs, model=args.model, judge=None if args.dry_run else judge,
-                               include_sports=args.include_sports)
+                               include_sports=args.include_sports, structured=args.structured,
+                               check_order=args.check_order)
                    for pair in pairs]
     except (OSError, ValueError, KeyError, TypeError) as error:
         parser.error(str(error))

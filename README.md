@@ -97,3 +97,82 @@ python -m judge pairs --input pairs.json --model MODEL > reviews.json
 The judge selects an economics, politics, or crypto rubric based on the catalog categories and uses the common rubric for other non-sports pairs. It checks each concrete pair's rules, including sources, deadlines, time zones, and exceptional outcomes. Sports pairs use the existing sports template workflow by default. Use `--include-sports` to test individual sports contracts with the pair judge.
 
 Use `ordinary_mapping` to inspect the verdict for ordinary settlement. Share `human_review_questions` with the reviewer. Sports exception findings can share a question when the event, Kalshi secondary rules, and Polymarket US contract and description match. Each pair's scenario remains visible in the question. The `human_review_queue` contains the full evidence for each flagged pair. Each queued result includes the available contract evidence, proposed side mapping, and reason it needs review. A checklist difference or uncertainty goes to this queue when the model names a plausible scenario and explains the effect on both mapped payouts. Generic omissions stay visible in the checklist. Missing or changed core rules and failed judgments also go to the queue. A result of `no_difference_found` is a model finding. The pair judge does not change flags or grant trading approval.
+
+### Run non-sports retrieval, proposal, and review together
+
+Use the Python environment with Leo's proposer and embedding dependencies installed.
+Export `OPENAI_API_KEY` and use an account with access to the embedding model.
+Pass Leo's checkout when the modules live in a separate worktree.
+
+```bash
+python -m judge pipeline --proposer-root ../ieor-match-proposer \
+  --query-id KALSHI:KXFEDDECISION-26DEC
+```
+
+For a live batch, run:
+
+```bash
+python -m judge pipeline --live --proposer-root ../ieor-match-proposer --queries 3
+```
+
+`--live` refreshes public Kalshi and Polymarket US markets and uses the tier judge.
+`--queries` limits the sampled open non-sports events. Alternatively, repeat
+`--query-id` to target known events. Use `--live --dry-run` to test collection and
+retrieval without OpenAI calls.
+
+The saved-data mode uses the proposer checkout's collector data by default.
+`--data-dir` selects a different collector data directory, and `--tier` enables
+tier scoring on saved data.
+
+Each run saves frozen catalogs, candidates, run-local proposer flags, and
+`reviews.json` under `data/non_sports_runs/`. The live report marks Material
+and Blocking pairs with `needs_human`. The run uses isolated data and review
+reports for a read-only market workflow.
+
+### Compare independently extracted rules
+
+Add `--structured` to `judge pairs` or `judge pipeline`. The judge reads each
+contract independently and saves the extracted fields, source text, and verified
+quotes. It compares supported single threshold literals and ISO-8601 cutoff
+literals with explicit offsets. The model plans a shared set of scenarios from
+the terms, then assesses both mapped payouts for each set of facts. The report
+records the assessed amounts and exact supporting quotes under `scenario_results`.
+Code derives a payout difference only when both assessed amounts are known and
+different. A missing or discretionary payout remains unresolved.
+
+Add `--check-order` to reassess the same scenario IDs and facts with the venues
+presented in reverse order. The side mapping stays fixed. A change in an assessed
+payout leaves that scenario unresolved and sends it to review. A structured run
+uses two extraction calls, one scenario planning call, and one payout assessment.
+Order checking adds a second payout assessment.
+
+```bash
+python -m judge pairs --structured --check-order --input pairs.json
+```
+
+### Assign settlement-risk tiers
+
+`judge tier` reads exact market pairs. It verifies quoted passages, caches each
+market extraction, runs deterministic checks, and calls the semantic judge once
+per pair. The final tier is the highest supported finding. Material and Blocking
+pairs enter human review. The report includes the code tier and cited scenarios.
+
+Use `--fetch-only` to save market evidence without model calls. A live manifest row
+includes `pair_id`, `kalshi_event_ticker`, `kalshi_ticker`, `polymarket_venue`,
+`polymarket_market_slug`, and optionally `polymarket_side` (defaults to Yes).
+Gamma pairs specify `polymarket_venue: "polymarket_international"` and
+`polymarket_event_slug`. The Polymarket US gateway uses `polymarket_venue: "polymarket_us"`.
+A pair can also use the existing `kalshi_market_uid` and `polyus_market_uid` fields
+to load from the local catalogs.
+
+```bash
+python -m judge tier run --pairs pairs.json --fetch-only --output evidence.json
+python -m judge tier run --pairs evidence.json --output tier-reviews.json
+python -m judge tier score --labels human-tiers.csv --predictions tier-reviews.json
+```
+
+Use `--code-only` for the provisional code tier. That mode still needs model
+access for any uncached extraction. The scorer uses `Your tier` from a CSV or TSV
+with a `#` or `pair_id` column. Missing predictions count toward the denominator
+for Material and Blocking recall and appear separately in the report. Include
+the expected check in `Your notes` so it appears alongside missed cases.

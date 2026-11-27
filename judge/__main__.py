@@ -19,6 +19,14 @@ from . import core, rubrics
 
 
 def main():
+    if sys.argv[1:2] == ["tier"]:
+        from .tier import main as judge_tiers
+
+        return judge_tiers(sys.argv[2:])
+    if sys.argv[1:2] == ["pipeline"]:
+        from .pipeline import main as run_pipeline
+
+        return run_pipeline(sys.argv[2:])
     if sys.argv[1:2] == ["pairs"]:
         from .pairs import main as review_pairs
 
