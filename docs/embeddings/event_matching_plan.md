@@ -4,6 +4,8 @@
 
 Find candidate pairs of Kalshi and Polymarket US **events** first, then compare individual contracts within promising event pairs. Event similarity is a retrieval signal; it does not establish that contracts are equivalent.
 
+The [Polymarket US to Kalshi integration plan](polymarket_first_integration_plan.md) covers the planned direction change and the handoff to Leo’s proposer and Stefan’s settlement judge. The phases below describe the original Kalshi-first design.
+
 ## Phase 1: Build event records
 
 - Group the existing market profiles by platform and `event_uid`, retaining the contracts belonging to each event.

@@ -9,6 +9,10 @@ from pathlib import Path
 import sqlite3
 from urllib.parse import parse_qs, urlsplit
 
+from embeddings.search import configs
+from evaluation.retrieval.evaluate_event_sample import evaluate, query_uid, validate_cases
+from .results import retrieval_direction
+
 PAGE = Path(__file__).with_name('browser.html')
 CONTRACT_PAGE = Path(__file__).with_name('contracts.html')
 SORTS = {
@@ -25,17 +29,39 @@ def connect(path):
     return db
 
 
-def query_events(db, params):
+def report_metadata(db):
+    row = db.execute("SELECT value FROM run_metadata WHERE key='retrieval_metadata'").fetchone()
+    return json.loads(row[0]) if row else {}
+
+
+def report_context(db):
+    row = db.execute("SELECT value FROM run_metadata WHERE key='retrieval_context'").fetchone()
+    return json.loads(row[0]) if row else report_metadata(db)
+
+
+def category_filter(column, category, platform):
+    if platform:
+        mappings, _, _ = configs()
+        lookup = mappings[platform.lower()]
+        labels = [key for key, value in lookup.items() if category == 'unknown' or category == value]
+        match = f"lower(trim(coalesce({column}, ''))) IN ({','.join('?' for _ in labels)})"
+        return ('NOT ' + match if category == 'unknown' else match), labels
+    # Legacy reports used a sports versus nonempty-category split.
+    if category == 'sports':
+        return f"lower(trim({column})) = 'sports'", []
+    if category == 'unknown':
+        return f"({column} IS NULL OR trim({column}) = '')", []
+    return f"{column} IS NOT NULL AND trim({column}) <> '' AND lower(trim({column})) <> 'sports'", []
+
+
+def query_events(db, params, platform=None):
     def param(name, default=''):
         return params.get(name, [default])[0]
     conditions, values = [], []
     category = param('category', 'non-sports')
-    if category == 'non-sports':
-        conditions.append("e.category IS NOT NULL AND trim(e.category) <> '' AND lower(trim(e.category)) <> 'sports'")
-    elif category == 'sports':
-        conditions.append("lower(trim(e.category)) = 'sports'")
-    elif category == 'unknown':
-        conditions.append("(e.category IS NULL OR trim(e.category) = '')")
+    if category in ('non-sports', 'sports', 'unknown'):
+        condition, values = category_filter('e.category', category, platform)
+        conditions.append(condition)
     elif category.startswith('category:'):
         conditions.append('e.category = ? COLLATE NOCASE')
         values.append(category[len('category:'):])
@@ -72,19 +98,20 @@ def query_events(db, params):
     return {'total': total, 'page': page, 'page_size': 50, 'events': [dict(row) for row in rows]}
 
 
-def sample_events(db, seed, method='volume', category='non-sports', size=20):
+def sample_events(db, seed, method='volume', category='non-sports', size=20, platform=None):
     """Sample saved query events without replacement, with reproducible ordering."""
     if method not in ('volume', 'uniform') or category not in ('all', 'sports', 'non-sports'):
         raise ValueError('Invalid sampling method or category')
-    where = []
-    if category == 'non-sports':
-        where.append("category IS NOT NULL AND trim(category) <> '' AND lower(trim(category)) <> 'sports'")
-    elif category == 'sports':
-        where.append("lower(trim(category)) = 'sports'")
+    if not 1 <= size <= 100:
+        raise ValueError('Sample size must be between 1 and 100')
+    where, values = [], []
+    if category != 'all':
+        condition, values = category_filter('category', category, platform)
+        where.append(condition)
     if method == 'volume':
         where.append('total_volume > 0')
     clause = ' WHERE ' + ' AND '.join(where) if where else ''
-    rows = [dict(row) for row in db.execute('SELECT * FROM events' + clause + ' ORDER BY event_uid')]
+    rows = [dict(row) for row in db.execute('SELECT * FROM events' + clause + ' ORDER BY event_uid', values)]
     if method == 'volume':
         rows = [row for row in rows if math.isfinite(row['total_volume'])]
     if len(rows) < size:
@@ -104,8 +131,40 @@ def sample_events(db, seed, method='volume', category='non-sports', size=20):
             'snapshot_ms': json.loads(snapshot[0]) if snapshot else None, 'events': selected}
 
 
+def evaluate_report(db, rows):
+    direction = validate_cases(rows)
+    metadata = report_metadata(db)
+    if direction != retrieval_direction(metadata):
+        raise ValueError('The evaluation and report use different retrieval directions')
+    results = {}
+    for case in rows:
+        uid = query_uid(case)
+        if db.execute('SELECT 1 FROM events WHERE event_uid = ?', (uid,)).fetchone():
+            results[uid] = [dict(row) for row in db.execute(
+                'SELECT candidate_uid FROM matches WHERE event_uid = ? ORDER BY rank LIMIT 10', (uid,))]
+    pool = set(metadata['candidate_ids']) if 'candidate_ids' in metadata else None
+    return evaluate(rows, results, pool, allow_missing_queries=True)
+
+
 def handler_for(database):
     class Handler(BaseHTTPRequestHandler):
+        def do_POST(self):
+            if self.path != '/api/evaluate':
+                self.respond(404, b'Not found', 'text/plain; charset=utf-8')
+                return
+            try:
+                size = int(self.headers.get('Content-Length', '0'))
+                if not 0 < size <= 1024 * 1024:
+                    raise ValueError('Invalid evaluation request size')
+                rows = json.loads(self.rfile.read(size))
+                with closing(connect(database)) as db:
+                    result = evaluate_report(db, rows)
+                self.respond(200, json.dumps(result, allow_nan=False).encode(), 'application/json; charset=utf-8')
+            except ValueError as exc:
+                self.respond(400, json.dumps({'error': str(exc)}).encode(), 'application/json; charset=utf-8')
+            except (sqlite3.Error, OSError):
+                self.respond(500, b'{"error":"Could not read the reporting database"}', 'application/json; charset=utf-8')
+
         def do_GET(self):
             parsed = urlsplit(self.path)
             try:
@@ -120,12 +179,19 @@ def handler_for(database):
                     return
                 with closing(connect(database)) as db:
                     params = parse_qs(parsed.query, keep_blank_values=True)
+                    metadata = report_context(db)
+                    query_platform, candidate_platform = retrieval_direction(metadata)
+                    # Apply mapped categories to new runs and retain the filters for legacy reports.
+                    platform_filter = query_platform if 'scope' in metadata else None
                     if parsed.path == '/api/filters':
                         categories = [r[0] for r in db.execute("SELECT DISTINCT category FROM events WHERE category IS NOT NULL AND trim(category) <> '' ORDER BY category COLLATE NOCASE")]
                         row = db.execute("SELECT value FROM run_metadata WHERE key='volume_snapshot_latest_ms'").fetchone()
-                        result = {'categories': categories, 'snapshot_ms': json.loads(row[0]) if row else None}
+                        has_volume = db.execute('SELECT 1 FROM events WHERE total_volume > 0 LIMIT 1').fetchone() is not None
+                        result = {'categories': categories, 'snapshot_ms': json.loads(row[0]) if row else None,
+                                  'query_platform': query_platform, 'candidate_platform': candidate_platform,
+                                  'scope': metadata.get('scope', 'non-sports'), 'has_volume': has_volume}
                     elif parsed.path == '/api/events':
-                        result = query_events(db, params)
+                        result = query_events(db, params, platform_filter)
                     elif parsed.path == '/api/sample':
                         try:
                             seed = int(params.get('seed', [''])[0])
@@ -133,7 +199,13 @@ def handler_for(database):
                             raise ValueError('Invalid sample seed') from exc
                         if seed < 0 or seed > 4294967295:
                             raise ValueError('Invalid sample seed')
-                        result = sample_events(db, seed, params.get('method', ['volume'])[0], params.get('category', ['non-sports'])[0])
+                        try:
+                            size = int(params.get('size', ['20'])[0])
+                        except ValueError as exc:
+                            raise ValueError('Invalid sample size') from exc
+                        result = sample_events(db, seed, params.get('method', ['uniform'])[0],
+                                               params.get('category', ['non-sports'])[0], size, platform_filter)
+                        result.update(query_platform=query_platform, candidate_platform=candidate_platform)
                     elif parsed.path == '/api/contracts':
                         term = params.get('search', [''])[0].strip()
                         event_uid = params.get('event_uid', [''])[0].strip()
@@ -157,10 +229,11 @@ def handler_for(database):
                             raise ValueError('Enter at least two characters')
                         rows = db.execute("""SELECT event_uid, min(title) AS title,
                             max(in_retrieval_pool) AS in_retrieval_pool, count(*) AS contract_count
-                            FROM contracts WHERE platform = 'POLYUS' AND event_uid IS NOT NULL
+                            FROM contracts WHERE platform = ? AND event_uid IS NOT NULL
                             AND (instr(lower(event_uid), lower(?)) > 0
                                  OR instr(lower(coalesce(title, '')), lower(?)) > 0)
-                            GROUP BY event_uid ORDER BY title COLLATE NOCASE, event_uid LIMIT 101""", (term, term)).fetchall()
+                            GROUP BY event_uid ORDER BY title COLLATE NOCASE, event_uid LIMIT 101""",
+                                          (candidate_platform, term, term)).fetchall()
                         result = {'events': [dict(row) for row in rows[:100]], 'truncated': len(rows) > 100}
                     elif parsed.path == '/api/contract-pair':
                         source = params.get('source', [''])[0].strip()
@@ -168,8 +241,11 @@ def handler_for(database):
                         row = db.execute('''SELECT c.market_uid, c.event_uid, c.title, c.market_title,
                             c.in_retrieval_pool, m.rank FROM contracts c
                             LEFT JOIN contracts k ON k.market_uid = ? AND k.platform = 'KALSHI'
-                            LEFT JOIN matches m ON m.event_uid = k.event_uid AND m.candidate_uid = c.event_uid
-                            WHERE c.market_uid = ? AND c.platform = 'POLYUS' ''', (source, target)).fetchone()
+                            LEFT JOIN matches m ON
+                                m.event_uid = CASE WHEN ? = 'KALSHI' THEN k.event_uid ELSE c.event_uid END
+                                AND m.candidate_uid = CASE WHEN ? = 'KALSHI' THEN c.event_uid ELSE k.event_uid END
+                            WHERE c.market_uid = ? AND c.platform = 'POLYUS' ''',
+                                         (source, query_platform, query_platform, target)).fetchone()
                         result = {'target': dict(row) if row else None}
                     elif parsed.path == '/api/matches':
                         uid = params.get('event_uid', [''])[0]

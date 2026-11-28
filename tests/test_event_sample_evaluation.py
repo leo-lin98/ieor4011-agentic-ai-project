@@ -55,5 +55,22 @@ class EventSampleEvaluationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             evaluate([{'set_id': 's', 'kalshi_uid': 'k', 'outcome': 'unreviewed', 'related_events': [], 'suggestions': []}], {}, set())
 
+    def test_polyus_csv_and_missing_queries(self):
+        rows = [dict(set_id='s', query_uid=uid, query_platform='POLYUS', candidate_platform='KALSHI',
+                     outcome=outcome, related_events='[{"event_uid":"k","judgment":"likely_exact"}]',
+                     suggestions='[]') for uid, outcome in [('p1', 'found_top10'), ('p2', 'unsure'), ('p3', 'unreviewed')]]
+        with tempfile.NamedTemporaryFile(mode='w+', newline='', encoding='utf-8') as f:
+            writer = csv.DictWriter(f, fieldnames=rows[0].keys())
+            writer.writeheader()
+            writer.writerows(rows)
+            f.flush()
+            cases = load_cases(f.name)
+        ranked = [{'candidate_uid': uid} for uid in ('other1', 'other2', 'other3', 'k')]
+        report = evaluate(cases, {'p1': ranked}, {'k'}, allow_missing_queries=True)
+        self.assertEqual(report['missing_query_ids'], ['p2'])
+        self.assertEqual(report['reviewed_events'], 2)
+        self.assertEqual(report['metrics']['likely_exact']['event_hit_rate_at_3'], 0)
+        self.assertEqual(report['metrics']['likely_exact']['event_hit_rate_at_10'], 1)
+
 
 if __name__ == '__main__': unittest.main()

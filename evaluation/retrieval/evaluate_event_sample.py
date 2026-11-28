@@ -4,24 +4,50 @@ from collections import Counter
 import csv
 import json
 
-from embeddings.reporting.results import iter_results
+from embeddings.reporting.results import iter_results, retrieval_direction
+
+
+def query_uid(row):
+    return row.get('query_uid') or row.get('kalshi_uid')
+
+
+def validate_cases(rows):
+    if not isinstance(rows, list) or not rows:
+        raise ValueError('Expected at least one evaluation row')
+    for row in rows:
+        if not isinstance(row, dict) or not all(
+            isinstance(value, str) and value for value in (query_uid(row), row.get('set_id'), row.get('outcome'))
+        ):
+            raise ValueError('Invalid evaluation row')
+        for key, id_key in (('related_events', 'event_uid'), ('suggestions', 'candidate_uid')):
+            if not isinstance(row.get(key), list) or any(
+                not isinstance(item, dict) or not isinstance(item.get(id_key), str) for item in row[key]
+            ):
+                raise ValueError(f'Invalid {key} for {query_uid(row)}')
+        if any(not isinstance(item.get('judgment', ''), str) for item in row['related_events']):
+            raise ValueError(f'Invalid judgment for {query_uid(row)}')
+    if len({query_uid(row) for row in rows}) != len(rows):
+        raise ValueError('Evaluation contains duplicate query events')
+    directions = {retrieval_direction(row) for row in rows}
+    if len(directions) != 1:
+        raise ValueError('Evaluation rows must use one retrieval direction')
+    return directions.pop()
 
 
 def load_cases(path):
     with open(path, newline='', encoding='utf-8-sig') as f:
         rows = list(csv.DictReader(f))
-    required = {'set_id', 'kalshi_uid', 'outcome', 'related_events', 'suggestions'}
+    required = {'set_id', 'outcome', 'related_events', 'suggestions'}
     if not rows or not required.issubset(rows[0]):
         raise ValueError('Expected an evaluation-set CSV exported by the browser')
-    if len({r['kalshi_uid'] for r in rows}) != len(rows):
-        raise ValueError('CSV contains duplicate Kalshi events')
     for row in rows:
         row['related_events'] = json.loads(row['related_events'])
         row['suggestions'] = json.loads(row['suggestions'])
+    validate_cases(rows)
     return rows
 
 
-def evaluate(rows, results=None, pool=None, include_proposed=False):
+def evaluate(rows, results=None, pool=None, include_proposed=False, *, allow_missing_queries=False):
     """Calculate event-level top-10 hits against independently recorded labels.
 
     Missing labels and targets outside the candidate pool are reported separately.
@@ -32,19 +58,27 @@ def evaluate(rows, results=None, pool=None, include_proposed=False):
                           'events_with_all_targets_in_pool': 0,
                           'events_with_targets_outside_pool': 0,
                           'events_with_any_target_in_top_10': 0,
-                          'events_with_any_target_in_top_5': 0}
+                          'events_with_any_target_in_top_5': 0,
+                          'events_with_any_target_in_top_3': 0}
                for judgment in ('likely_exact', 'possible')}
     examples = []
+    missing_queries = []
     for row in rows:
-        uid = row['kalshi_uid']
+        uid = query_uid(row)
         if results is None:
             suggestions = row['suggestions']
         else:
             if uid not in results:
-                raise ValueError(f'Query absent from retrieval results: {uid}')
+                if not allow_missing_queries:
+                    raise ValueError(f'Query absent from retrieval results: {uid}')
+                if row['outcome'] != 'unreviewed':
+                    missing_queries.append(uid)
+                continue
             suggestions = results[uid]
+        if row['outcome'] == 'unreviewed':
+            continue
         ranked = [x['candidate_uid'] for x in suggestions[:10]]
-        example = {'kalshi_uid': uid, 'outcome': row['outcome']}
+        example = {'query_uid': uid, 'outcome': row['outcome']}
         for judgment, metric in metrics.items():
             accepted = {judgment}
             if include_proposed and judgment == 'likely_exact':
@@ -65,6 +99,8 @@ def evaluate(rows, results=None, pool=None, include_proposed=False):
                     metric['events_with_any_target_in_top_10'] += 1
                 if any(target in ranked[:5] for target in in_pool):
                     metric['events_with_any_target_in_top_5'] += 1
+                if any(target in ranked[:3] for target in in_pool):
+                    metric['events_with_any_target_in_top_3'] += 1
             example[judgment] = {'known_ids': sorted(targets), 'outside_pool': sorted(outside_pool),
                                  'top_10_ids': [x for x in ranked if x in targets]}
         examples.append(example)
@@ -72,20 +108,22 @@ def evaluate(rows, results=None, pool=None, include_proposed=False):
         denominator = metric['events_with_targets_in_pool']
         metric['event_hit_rate_at_10'] = metric['events_with_any_target_in_top_10'] / denominator if denominator else None
         metric['event_hit_rate_at_5'] = metric['events_with_any_target_in_top_5'] / denominator if denominator else None
+        metric['event_hit_rate_at_3'] = metric['events_with_any_target_in_top_3'] / denominator if denominator else None
     set_ids = list(dict.fromkeys(row['set_id'] for row in rows))
     return {'set_id': set_ids[0] if len(set_ids) == 1 else None, 'set_ids': set_ids,
             'events': len(rows), 'outcomes': dict(outcomes),
+            'reviewed_events': len(rows) - outcomes['unreviewed'], 'missing_query_ids': missing_queries,
             'proposed_labels_included': include_proposed,
             'case_origins': dict(Counter(row.get('case_origin', 'unspecified') for row in rows)),
             'source': 'exported baseline suggestions' if results is None else 'retrieval run',
             'candidate_pool_verified': pool is not None, 'metrics': metrics, 'examples': examples,
-            'note': 'Conditional event-level hit rates use reviewed targets in the candidate pool. Labels are incomplete and originally came from baseline suggestions; review additional candidates before interpreting model comparisons.'}
+            'note': 'Hit rates use reviewed queries present in the run with a labeled target in the candidate pool.'}
 
 
 def load_results(path, wanted):
     iterator = iter_results(path)
     metadata = next(iterator)
-    pool = set(metadata['candidate_ids'])
+    pool = set(metadata['candidate_ids']) if 'candidate_ids' in metadata else None
     found = {}
     for row in iterator:
         uid = row['query']['event_uid']
@@ -101,13 +139,20 @@ def main():
     parser.add_argument('--results', help='Retrieval JSON for another run; omit to summarize the saved baseline')
     parser.add_argument('--include-proposed', action='store_true', help='Include proposed likely-exact pairs that have not yet been reviewed by the user')
     args = parser.parse_args()
-    rows = load_cases(args.reviews)
-    results, pool, metadata = load_results(args.results, {r['kalshi_uid'] for r in rows}) if args.results else (None, None, None)
-    report = evaluate(rows, results, pool, args.include_proposed)
-    if args.include_proposed and pool is None:
-        parser.error('--include-proposed requires --results so candidate-pool exclusions are not mistaken for ranking failures')
+    try:
+        rows = load_cases(args.reviews)
+        direction = retrieval_direction(rows[0])
+        results, pool, metadata = load_results(args.results, {query_uid(r) for r in rows}) if args.results else (None, None, None)
+        if metadata is not None and retrieval_direction(metadata) != direction:
+            raise ValueError('The evaluation and retrieval run use different directions')
+        if args.include_proposed and pool is None:
+            raise ValueError('--include-proposed requires a retrieval run with candidate-pool IDs')
+        report = evaluate(rows, results, pool, args.include_proposed, allow_missing_queries=True)
+    except (ValueError, TypeError, OSError, StopIteration) as exc:
+        parser.error(str(exc))
+    report['query_platform'], report['candidate_platform'] = direction
     if metadata:
-        report['run'] = {k: metadata.get(k) for k in ('model', 'resolved_revision', 'representation', 'mapping_sha256', 'top_only')}
+        report['run'] = {k: metadata.get(k) for k in ('model', 'resolved_revision', 'representation', 'mapping_sha256', 'top_only', 'scope', 'top_k')}
     print(json.dumps(report, indent=2))
 
 

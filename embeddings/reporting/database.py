@@ -8,7 +8,7 @@ import pandas as pd
 import tempfile
 from pathlib import Path
 
-from .results import iter_results
+from .results import iter_results, retrieval_direction
 from .volume import event_volumes
 
 
@@ -25,9 +25,10 @@ def build_report(input_path, output_path, snapshots, profiles):
             raise ValueError('Output exists and is not a reporting database') from exc
         if not marker:
             raise ValueError('Output exists and is not a reporting database')
-    volumes, snapshot_ms = event_volumes(snapshots, profiles)
     results = iter_results(source)
     metadata = next(results)
+    query_platform, candidate_platform = retrieval_direction(metadata)
+    volumes, snapshot_ms = event_volumes(snapshots, profiles, query_platform) if snapshots else ({}, None)
     candidate_events = {e['event_uid']: e for e in metadata.get('candidate_events', [])}
     output.parent.mkdir(parents=True, exist_ok=True)
     fd, temp = tempfile.mkstemp(prefix='.report-', suffix='.sqlite3', dir=output.parent)
@@ -57,9 +58,10 @@ def build_report(input_path, output_path, snapshots, profiles):
                 CREATE INDEX events_category_volume ON events(category, total_volume DESC);
             ''')
             db.executemany('INSERT INTO run_metadata VALUES (?, ?)', [
-                ('retrieval_metadata', json.dumps(metadata)),
+                ('retrieval_metadata', json.dumps({k: v for k, v in metadata.items() if k != 'candidate_events'})),
+                ('retrieval_context', json.dumps({k: metadata[k] for k in ('query_platform', 'candidate_platform', 'scope') if k in metadata})),
                 ('volume_snapshot_latest_ms', json.dumps(snapshot_ms)),
-                ('volume_snapshots', json.dumps(str(Path(snapshots).resolve()))),
+                ('volume_snapshots', json.dumps(str(Path(snapshots).resolve()) if snapshots else None)),
                 ('profiles', json.dumps(str(Path(profiles).resolve()))),
                 ('retrieval_input', json.dumps(str(source))),
             ])
@@ -87,9 +89,9 @@ def build_report(input_path, output_path, snapshots, profiles):
             def contract_rows():
                 for row in rows.itertuples(index=False, name=None):
                     uid, platform, event = row[:3]
-                    if not uid or platform not in ('KALSHI', 'POLYUS'):
+                    if not uid or platform not in (query_platform, candidate_platform):
                         continue
-                    included = event in (query_ids if platform == 'KALSHI' else pool_ids)
+                    included = event in (query_ids if platform == query_platform else pool_ids)
                     yield (*row, int(included))
             db.executemany('INSERT OR IGNORE INTO contracts VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', contract_rows())
         os.replace(temp, output)
@@ -102,7 +104,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('input', help='Saved embedding results JSON')
     parser.add_argument('output', help='SQLite report to create or replace (not the embedding cache)')
-    parser.add_argument('--volume-snapshots', required=True, help='Kalshi pricing snapshot directory')
+    parser.add_argument('--volume-snapshots', help='Optional pricing snapshots for the query venue')
     parser.add_argument('--profiles', default='data/market_profiles/market_profiles.parquet')
     args = parser.parse_args()
     # Never overwrite the vector cache with a report.

@@ -1,4 +1,5 @@
-const storageKey = 'embedding-top10-event-reviews-v1';
+const venueName = {KALSHI: 'Kalshi', POLYUS: 'Polymarket US'};
+let queryPlatform, candidatePlatform, storageKey, setsKey;
 const form = document.querySelector('#filters');
 const events = document.querySelector('#events');
 const status = document.querySelector('#status');
@@ -14,8 +15,8 @@ function el(tag, text, cls) {
   if (cls) n.className = cls;
   return n;
 }
-async function get(url) {
-  const response = await fetch(url), data = await response.json();
+async function get(url, options) {
+  const response = await fetch(url, options), data = await response.json();
   if (!response.ok) throw new Error(data.error || 'Request failed');
   return data;
 }
@@ -38,8 +39,8 @@ function updateProgress() {
   const saved = readSafely(); if (!saved) return;
   const reviews = Object.values(saved), count = name => reviews.filter(r => r.outcome === name).length;
   const hits = count('found_top10'), misses = count('in_collection_not_top10');
-  const exact = reviews.filter(r => selectedFrom(r).some(e => e.judgment === 'likely_exact')).length;
-  const possible = reviews.filter(r => selectedFrom(r).some(e => e.judgment === 'possible')).length;
+  const exact = reviews.filter(r => r.outcome === 'found_top10' && selectedFrom(r).some(e => e.judgment === 'likely_exact')).length;
+  const possible = reviews.filter(r => r.outcome === 'found_top10' && selectedFrom(r).some(e => e.judgment === 'possible')).length;
   document.querySelector('#review-progress').textContent = `${reviews.length} events reviewed · ${hits} with related suggestions (${exact} likely exact; ${possible} possible) · ${misses} missed in collection · ${count('not_in_collection')} missing from collection · ${count('not_on_platform')} not on platform · ${count('unsure')} unsure`;
 }
 function reviewLabel(eventId) {
@@ -48,13 +49,14 @@ function reviewLabel(eventId) {
 }
 function makeReview(event, suggestions, onSaved, reviewKey = storageKey) {
   const stored = readSafely(reviewKey)?.[event.event_uid] || {};
+  const candidateVenue = venueName[candidatePlatform];
   const wrapper = el('div', undefined, 'comparison');
   const heading = el('h3', 'Review suggested events');
   wrapper.append(heading, el('p', 'Choose likely exact match or possible match for each relevant suggestion. Leave the rest unselected.', 'comparison-intro'));
   if (suggestions.length < 10) wrapper.append(el('p', `Only ${suggestions.length} suggestions were saved for this event.`, 'notice'));
   const review = el('form', undefined, 'review-form');
   const list = el('div', undefined, 'candidates');
-  const savedIds = new Set(selectedFrom(stored).map(item => item.event_uid));
+  const savedIds = new Set(selectedFrom(stored).filter(item => item.event_uid !== stored.missed_event_uid).map(item => item.event_uid));
   const inputs = [];
   const unavailable = [...savedIds].filter(id => !suggestions.some(candidate => candidate.candidate_uid === id));
   if (unavailable.length) wrapper.append(el('p', 'Previously selected events not in these suggestions: ' + unavailable.join(', ') + '. Saving this review will replace those selections.', 'notice'));
@@ -80,8 +82,8 @@ function makeReview(event, suggestions, onSaved, reviewKey = storageKey) {
   none.append(el('legend', 'If none is related, what did you find?'));
   const options = [
     ['in_collection_not_top10', 'A related event is in our collection, but was not suggested'],
-    ['not_in_collection', 'A related event is on Polymarket US, but is missing from our collection'],
-    ['not_on_platform', 'No related event exists on Polymarket US (verified)'],
+    ['not_in_collection', `A related event is on ${candidateVenue}, but is missing from our collection`],
+    ['not_on_platform', `No related event exists on ${candidateVenue} (verified)`],
     ['unsure', 'I haven’t found one / not sure yet'],
   ];
   for (const [value, text] of options) {
@@ -91,13 +93,24 @@ function makeReview(event, suggestions, onSaved, reviewKey = storageKey) {
   }
   review.append(none);
   const lookup = el('section', undefined, 'lookup'), lookupTitle = el('strong', 'Find an event in the collection');
-  const lookupLabel = el('label', 'Search Polymarket US event title or ID'), lookupInput = el('input');
+  const lookupLabel = el('label', `Search ${candidateVenue} event title or ID`), lookupInput = el('input');
   lookupInput.type = 'search'; lookupInput.placeholder = 'At least 2 characters'; lookupLabel.append(lookupInput);
   const searchButton = el('button', 'Search collection'); searchButton.type = 'button';
   const lookupStatus = el('p'), lookupResults = el('div', undefined, 'lookup-results'); lookupStatus.setAttribute('role', 'status');
   const chosen = el('p');
-  let missingEvent = stored.outcome === 'in_collection_not_top10' ? (stored.missed_event_uid || stored.matched_event_uid || (/^POLYUS:[^\s]+$/.test(stored.evidence || '') ? stored.evidence : '')) : '';
-  function showChosen() { chosen.textContent = missingEvent ? 'Selected collected event: ' + missingEvent : ''; }
+  const missedLabel = el('label', 'Match judgment for selected event'), missedJudgment = el('select');
+  for (const [value, description] of [['', 'Choose a judgment'], ['likely_exact', 'Likely exact match'], ['possible', 'Possible match']]) {
+    const option = el('option', description); option.value = value; missedJudgment.append(option);
+  }
+  missedLabel.append(missedJudgment);
+  const missedReason = none.querySelector('input[value="in_collection_not_top10"]');
+  let missingEvent = missedReason.checked ? (stored.missed_event_uid || stored.matched_event_uid || '') : '';
+  missedJudgment.value = selectedFrom(stored).find(item => item.event_uid === missingEvent)?.judgment || '';
+  function showChosen() {
+    const visible = missingEvent && missedReason.checked && !none.hidden;
+    chosen.textContent = visible ? 'Selected collected event: ' + missingEvent : '';
+    missedLabel.hidden = !visible;
+  }
   showChosen();
   searchButton.addEventListener('click', async () => {
     lookupResults.replaceChildren(); lookupStatus.textContent = 'Searching…';
@@ -111,14 +124,14 @@ function makeReview(event, suggestions, onSaved, reviewKey = storageKey) {
         select.addEventListener('click', () => {
           const suggestion = inputs.find(item => item.candidate.candidate_uid === candidate.event_uid);
           if (suggestion) { if (!suggestion.select.querySelector('option[value="unclassified"]')) { const option = el('option', 'Choose a match category'); option.value = 'unclassified'; suggestion.select.append(option); } suggestion.select.value = 'unclassified'; missingEvent = ''; lookupStatus.textContent = 'Event is in the suggestions above. Choose its match category.'; }
-          else { for (const item of inputs) item.select.value = ''; none.querySelector('input[value="in_collection_not_top10"]').checked = true; missingEvent = candidate.event_uid; lookupStatus.textContent = 'Selected as an event missed by the suggestions.'; }
-          showChosen(); sync();
+          else { for (const item of inputs) item.select.value = ''; missedReason.checked = true; if (missingEvent !== candidate.event_uid) missedJudgment.value = ''; missingEvent = candidate.event_uid; lookupStatus.textContent = 'Selected as an event missed by the suggestions.'; }
+          sync();
         });
         row.append(text, select); lookupResults.append(row);
       }
     } catch (err) { lookupStatus.textContent = err.message; }
   });
-  lookup.append(lookupTitle, lookupLabel, searchButton, lookupStatus, lookupResults, chosen); review.append(lookup);
+  lookup.append(lookupTitle, lookupLabel, searchButton, lookupStatus, lookupResults, chosen, missedLabel); review.append(lookup);
   const evidenceLabel = el('label', 'Evidence or external URL (optional)'), evidence = el('input');
   evidence.type = 'text'; evidence.value = stored.evidence || ''; evidenceLabel.append(evidence);
   const notesLabel = el('label', 'Notes (optional)'), notes = el('textarea'); notes.value = stored.notes || ''; notesLabel.append(notes);
@@ -126,7 +139,8 @@ function makeReview(event, suggestions, onSaved, reviewKey = storageKey) {
   save.type = 'submit'; remove.type = 'button'; actions.append(save, remove);
   const feedback = el('p', undefined, 'feedback'); feedback.setAttribute('role', 'status');
   review.append(evidenceLabel, notesLabel, actions, feedback);
-  function sync() { none.hidden = inputs.some(item => item.select.value); inputs.forEach(item => { item.select.closest('.candidate').dataset.selected = item.select.value ? 'true' : 'false'; }); }
+  function sync() { none.hidden = inputs.some(item => item.select.value); inputs.forEach(item => { item.select.closest('.candidate').dataset.selected = item.select.value ? 'true' : 'false'; }); showChosen(); }
+  none.addEventListener('change', showChosen);
   inputs.forEach(item => item.select.addEventListener('change', sync)); sync();
   review.addEventListener('submit', ev => {
     ev.preventDefault(); feedback.className = 'feedback';
@@ -134,15 +148,17 @@ function makeReview(event, suggestions, onSaved, reviewKey = storageKey) {
     if (selected.some(item => item.judgment === 'unclassified')) { feedback.className = 'feedback error'; feedback.textContent = 'Choose likely exact or possible for each selected event before saving.'; return; }
     const reason = review.querySelector('input[name="missing_reason"]:checked')?.value;
     if (!selected.length && !reason) { feedback.className = 'feedback error'; feedback.textContent = 'Select related events or choose what you found when none is related.'; return; }
-    if (!selected.length && reason === 'in_collection_not_top10' && !missingEvent) { feedback.className = 'feedback error'; feedback.textContent = 'Search the collection and select the related event.'; return; }
+    const missed = !selected.length && reason === 'in_collection_not_top10';
+    if (missed && (!missingEvent || !missedJudgment.value)) { feedback.className = 'feedback error'; feedback.textContent = 'Select the related event from the collection and choose a judgment.'; return; }
     try {
       const all = readReviews(reviewKey);
-      all[event.event_uid] = {kalshi_uid: event.event_uid, kalshi_title: event.title || '', outcome: selected.length ? 'found_top10' : reason, related_events: selected, missed_event_uid: selected.length ? '' : (reason === 'in_collection_not_top10' ? missingEvent : ''), evidence: evidence.value.trim(), notes: notes.value.trim(), reviewed_at: new Date().toISOString()};
+      const related = missed ? [{event_uid: missingEvent, rank: null, judgment: missedJudgment.value}] : selected;
+      all[event.event_uid] = {query_uid: event.event_uid, query_title: event.title || '', query_platform: queryPlatform, candidate_platform: candidatePlatform, outcome: selected.length ? 'found_top10' : reason, related_events: related, missed_event_uid: missed ? missingEvent : '', evidence: evidence.value.trim(), notes: notes.value.trim(), reviewed_at: new Date().toISOString()};
       localStorage.setItem(reviewKey, JSON.stringify(all)); updateProgress(); onSaved(); feedback.textContent = 'Review saved.';
     } catch (err) { feedback.className = 'feedback error'; feedback.textContent = 'Could not save review: ' + err.message; }
   });
   remove.addEventListener('click', () => {
-    try { const all = readReviews(reviewKey); delete all[event.event_uid]; localStorage.setItem(reviewKey, JSON.stringify(all)); inputs.forEach(item => {item.select.value = '';}); none.querySelectorAll('input').forEach(input => {input.checked = false;}); missingEvent = ''; showChosen(); evidence.value = ''; notes.value = ''; sync(); updateProgress(); onSaved(); feedback.textContent = 'Review removed.'; }
+    try { const all = readReviews(reviewKey); delete all[event.event_uid]; localStorage.setItem(reviewKey, JSON.stringify(all)); inputs.forEach(item => {item.select.value = '';}); none.querySelectorAll('input').forEach(input => {input.checked = false;}); missingEvent = ''; missedJudgment.value = ''; evidence.value = ''; notes.value = ''; sync(); updateProgress(); onSaved(); feedback.textContent = 'Review removed.'; }
     catch (err) { feedback.className = 'feedback error'; feedback.textContent = 'Could not remove review: ' + err.message; }
   });
   wrapper.append(review); return wrapper;
@@ -176,18 +192,21 @@ async function load() {
 }
 document.querySelector('#export-event-reviews').addEventListener('click', () => {
   const all = readSafely(); if (!all) return;
-  const fields = ['kalshi_uid','kalshi_title','outcome','related_event_ids','related_event_ranks','related_event_judgments','missed_event_uid','evidence','notes','reviewed_at'];
-  const rows = [fields, ...Object.values(all).map(r => { const related = selectedFrom(r); return [r.kalshi_uid, r.kalshi_title, r.outcome, JSON.stringify(related.map(x => x.event_uid)), JSON.stringify(related.map(x => x.rank)), JSON.stringify(related.map(x => x.judgment || 'unclassified')), r.missed_event_uid || (r.outcome === 'in_collection_not_top10' ? r.matched_event_uid || (/^POLYUS:[^\s]+$/.test(r.evidence || '') ? r.evidence : '') : ''), r.evidence, r.notes, r.reviewed_at]; })];
+  const fields = ['query_platform','candidate_platform','query_uid','query_title','outcome','related_event_ids','related_event_ranks','related_event_judgments','missed_event_uid','evidence','notes','reviewed_at'];
+  const rows = [fields, ...Object.values(all).map(r => {
+    const related = selectedFrom(r);
+    return [queryPlatform, candidatePlatform, r.query_uid || r.kalshi_uid, r.query_title || r.kalshi_title, r.outcome,
+      JSON.stringify(related.map(x => x.event_uid)), JSON.stringify(related.map(x => x.rank)),
+      JSON.stringify(related.map(x => x.judgment || 'unclassified')), r.missed_event_uid || r.matched_event_uid,
+      r.evidence, r.notes, r.reviewed_at];
+  })];
   const csv = rows.map(row => row.map(v => '"' + String(v ?? '').replaceAll('"', '""') + '"').join(',')).join('\r\n');
   const a = el('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8'})); a.download = 'event-reviews.csv'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 });
 form.addEventListener('submit', ev => { ev.preventDefault(); applied = new URLSearchParams(new FormData(form)); page = 1; load(); });
 previous.addEventListener('click', () => { if (page > 1) { page--; load(); } });
 next.addEventListener('click', () => { if (page * 50 < total) { page++; load(); } });
-window.addEventListener('storage', updateProgress); window.addEventListener('focus', updateProgress); updateProgress();
-(async () => { try { const data = await get('/api/filters'), category = document.querySelector('#category'); for (const name of data.categories) { const option = el('option', name); option.value = 'category:' + name; category.append(option); } if (data.snapshot_ms !== null) document.querySelector('#notice').append(' Latest source snapshot: ' + new Date(data.snapshot_ms).toLocaleString() + '. Individual markets may be older.'); await load(); } catch (err) { status.textContent = 'Could not load report.'; error.textContent = err.message; } })();
-
-const setsKey = 'embedding-evaluation-sets-v1', sampleForm = document.querySelector('#sample-form');
+const sampleForm = document.querySelector('#sample-form');
 const samplePicker = document.querySelector('#sample-picker'), samplePanel = document.querySelector('#sample-review');
 const sampleError = document.querySelector('#sample-error');
 let sampleIndex = 0;
@@ -208,7 +227,7 @@ function refreshSets(selected) {
   else samplePanel.replaceChildren();
 }
 function sampleCategoryLabel(category) { return ({'all': 'All categories', 'sports': 'Sports', 'non-sports': 'Non-sports'})[category] || category; }
-function sampleReviewsKey(id) { return 'embedding-evaluation-reviews-v1:' + id; }
+function sampleReviewsKey(id) { return 'embedding-evaluation-reviews-v2:' + id; }
 function showSample() {
   sampleError.textContent = '';
   try {
@@ -224,37 +243,79 @@ function showSample() {
       const hits = records.filter(r => r.outcome === 'found_top10').length;
       const misses = records.filter(r => r.outcome === 'in_collection_not_top10').length;
       const other = records.length - hits - misses;
-      const exact = records.filter(r => selectedFrom(r).some(e => e.judgment === 'likely_exact')).length;
-      const possible = records.filter(r => selectedFrom(r).some(e => e.judgment === 'possible')).length;
-      progress.textContent = `${hits} with related suggestions (${exact} likely exact; ${possible} possible) · ${misses} missed in collection · ${other} missing or unsure`; 
+      const exact = records.filter(r => r.outcome === 'found_top10' && selectedFrom(r).some(e => e.judgment === 'likely_exact')).length;
+      const possible = records.filter(r => r.outcome === 'found_top10' && selectedFrom(r).some(e => e.judgment === 'possible')).length;
+      progress.textContent = `${hits} with related suggestions (${exact} likely exact; ${possible} possible) · ${misses} missed in collection · ${other} missing or unsure`;
     }
     showEvaluationCounts(all); panel.append(progress);
     panel.append(el('p', `Seed ${set.seed} · ${set.eligible_events.toLocaleString()} eligible events · ${set.method === 'volume' ? 'volume weighted' : 'uniform random'} · ${sampleCategoryLabel(set.category)}`, 'notice'));
     panel.append(el('div', item.title || 'Untitled event', 'event-title'), el('small', item.event_uid));
     panel.append(el('p', `${item.category || 'Unclassified'} · ${item.total_volume === null ? 'Volume unavailable' : item.total_volume.toLocaleString(undefined, {maximumFractionDigits: 2}) + ' contracts traded'}${item.markets_with_volume < item.market_count ? ' (partial)' : ''}`));
+    const score = el('p', undefined, 'notice');
+    score.setAttribute('role', 'status');
     const review = makeReview(item, item.candidates, () => {
       const reviews = readReviews(sampleReviewsKey(id)), n = set.events.filter(event => reviews[event.event_uid]).length;
       panel.querySelector('strong').textContent = `Event ${sampleIndex + 1} of ${set.events.length} · ${n} reviewed`; showEvaluationCounts(reviews);
+      score.textContent = '';
     }, sampleReviewsKey(id));
     panel.append(review);
     panel.append(el('small', 'Save the review before moving to another event.'));
     const nav = el('nav', undefined, 'sample-nav'); nav.setAttribute('aria-label', 'Evaluation events');
-    const back = el('button', 'Previous event'), forward = el('button', 'Next event'), download = el('button', 'Download evaluation CSV');
-    back.type = forward.type = download.type = 'button'; back.disabled = sampleIndex === 0; forward.disabled = sampleIndex === set.events.length - 1;
+    const back = el('button', 'Previous event'), forward = el('button', 'Next event'), download = el('button', 'Download evaluation CSV'), test = el('button', 'Test current run');
+    back.type = forward.type = download.type = test.type = 'button'; back.disabled = sampleIndex === 0; forward.disabled = sampleIndex === set.events.length - 1;
     back.addEventListener('click', () => { sampleIndex--; showSample(); });
     forward.addEventListener('click', () => { sampleIndex++; showSample(); });
     download.addEventListener('click', () => exportSample(id, set));
-    nav.append(back, forward, download); panel.append(nav); samplePanel.append(panel);
+    test.addEventListener('click', async () => {
+      test.disabled = true;
+      score.textContent = 'Scoring saved reviews…';
+      try {
+        const result = await get('/api/evaluate', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(evaluationRows(id, set)),
+        });
+        const lines = ['likely_exact', 'possible'].map(judgment => {
+          const metric = result.metrics[judgment], label = judgment === 'likely_exact' ? 'Likely exact' : 'Possible';
+          const count = metric.events_with_targets_in_pool;
+          return count
+            ? `${label}: ${metric.events_with_any_target_in_top_3}/${count} at 3, ${metric.events_with_any_target_in_top_10}/${count} at 10`
+            : `${label}: no labeled targets in the candidate pool`;
+        });
+        const outside = new Set(result.examples.filter(example =>
+          example.likely_exact?.outside_pool.length || example.possible?.outside_pool.length).map(example => example.query_uid)).size;
+        score.textContent = [`${result.reviewed_events} of ${result.events} reviewed`, ...lines,
+          `${result.missing_query_ids.length} reviewed queries missing from this run`,
+          `${outside} with labeled targets outside the candidate pool`].join(' · ');
+      } catch (err) {
+        score.textContent = 'Could not score the evaluation: ' + err.message;
+      } finally {
+        test.disabled = false;
+      }
+    });
+    nav.append(back, forward, test, download); panel.append(nav, score); samplePanel.append(panel);
   } catch (err) { sampleError.textContent = 'Could not open the saved set: ' + err.message; }
+}
+function evaluationRows(id, set) {
+  const reviews = readReviews(sampleReviewsKey(id));
+  return set.events.map((event, index) => {
+    const review = reviews[event.event_uid] || {};
+    return {
+      set_id: id, created_at: set.created_at, seed: set.seed, method: set.method, category: set.category,
+      eligible_events: set.eligible_events, snapshot_ms: set.snapshot_ms, sample_order: index + 1,
+      query_platform: set.query_platform, candidate_platform: set.candidate_platform,
+      query_uid: event.event_uid, query_title: event.title, total_volume: event.total_volume,
+      markets_with_volume: event.markets_with_volume, market_count: event.market_count,
+      suggestions: event.candidates, outcome: review.outcome || 'unreviewed', related_events: selectedFrom(review),
+      missed_event_uid: review.missed_event_uid || '', evidence: review.evidence || '',
+      notes: review.notes || '', reviewed_at: review.reviewed_at || '',
+    };
+  });
 }
 function exportSample(id, set) {
   try {
-    const reviews = readReviews(sampleReviewsKey(id));
-    const fields = ['set_id','created_at','seed','method','category','eligible_events','snapshot_ms','sample_order','kalshi_uid','kalshi_title','total_volume','markets_with_volume','market_count','suggestions','outcome','related_events','missed_event_uid','evidence','notes','reviewed_at'];
-    const rows = [fields, ...set.events.map((event, index) => {
-      const review = reviews[event.event_uid] || {};
-      return [id,set.created_at,set.seed,set.method,set.category,set.eligible_events,set.snapshot_ms,index+1,event.event_uid,event.title,event.total_volume,event.markets_with_volume,event.market_count,JSON.stringify(event.candidates),review.outcome||'unreviewed',JSON.stringify(selectedFrom(review)),review.missed_event_uid||'',review.evidence||'',review.notes||'',review.reviewed_at||''];
-    })];
+    const records = evaluationRows(id, set), fields = Object.keys(records[0]);
+    const rows = [fields, ...records.map(record => fields.map(key => Array.isArray(record[key]) ? JSON.stringify(record[key]) : record[key]))];
     const csv = rows.map(row => row.map(value => '"' + String(value ?? '').replaceAll('"','""') + '"').join(',')).join('\r\n');
     const a = el('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8'})); a.download = 'evaluation-' + id + '.csv'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href),1000);
   } catch (err) { sampleError.textContent = 'Could not export the set: ' + err.message; }
@@ -268,7 +329,43 @@ sampleForm.addEventListener('submit', async ev => {
     const id = crypto.randomUUID(); set.created_at = new Date().toISOString(); sets[id] = set;
     localStorage.setItem(setsKey, JSON.stringify(sets)); sampleIndex = 0; refreshSets(id);
   } catch (err) { sampleError.textContent = 'Could not create the set: ' + err.message; }
-  finally { button.disabled = false; button.textContent = 'Create a set of 20'; }
+  finally { button.disabled = false; button.textContent = 'Create evaluation set'; }
 });
 samplePicker.addEventListener('change', () => { sampleIndex = 0; showSample(); });
-try { refreshSets(); } catch (err) { sampleError.textContent = 'Could not read saved sets: ' + err.message; }
+
+async function initialize() {
+  try {
+    const data = await get('/api/filters'), category = document.querySelector('#category');
+    queryPlatform = data.query_platform;
+    candidatePlatform = data.candidate_platform;
+    storageKey = queryPlatform === 'KALSHI' ? 'embedding-top10-event-reviews-v1' : 'embedding-top10-event-reviews-v2:POLYUS';
+    setsKey = 'embedding-evaluation-sets-v2:' + queryPlatform;
+    document.querySelector('#direction').textContent = `${venueName[queryPlatform]} → ${venueName[candidatePlatform]}`;
+    document.querySelector('#events-heading').textContent = `${venueName[queryPlatform]} events`;
+    for (const name of data.categories) {
+      const option = el('option', name); option.value = 'category:' + name; category.append(option);
+    }
+    category.value = sampleForm.elements.category.value = data.scope;
+    applied = new URLSearchParams(new FormData(form));
+    sampleForm.querySelector('option[value="volume"]').disabled = !data.has_volume;
+    if (data.has_volume) document.querySelector('#sampling-note').append(' Volume weighting uses events with positive observed volume.');
+    if (data.snapshot_ms !== null) document.querySelector('#notice').append(' Latest volume snapshot: ' + new Date(data.snapshot_ms).toLocaleString() + '.');
+    try {
+      const oldKeys = Object.keys(localStorage).filter(key =>
+        key === 'embedding-evaluation-sets-v1' || key.startsWith('embedding-evaluation-reviews-v1:'));
+      oldKeys.forEach(key => localStorage.removeItem(key));
+      refreshSets();
+      sampleForm.querySelector('button').disabled = false;
+    } catch (err) {
+      sampleError.textContent = 'Could not read saved sets: ' + err.message;
+    }
+    window.addEventListener('storage', updateProgress);
+    window.addEventListener('focus', updateProgress);
+    updateProgress();
+    await load();
+  } catch (err) {
+    status.textContent = 'Could not load report.';
+    error.textContent = err.message;
+  }
+}
+initialize();

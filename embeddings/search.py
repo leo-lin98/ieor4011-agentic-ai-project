@@ -8,6 +8,7 @@ import hashlib
 import json
 from pathlib import Path
 import numpy as np
+from .prepare import clean
 
 CONFIG = Path(__file__).parent / "config"
 
@@ -58,21 +59,55 @@ def sport(row, mappings, platform):
         if match: found.add(match)
     return next(iter(found)) if len(found) == 1 else None
 
+def category_group(event, categories, default_platform=""):
+    platform = norm(event.get("platform", default_platform))
+    return categories.get(platform, {}).get(norm(event.get("category")))
+
+def scope_events(events, categories, scope):
+    """Select complete events and count category classifications for each venue."""
+    selected = []
+    counts = {platform.upper(): dict.fromkeys(
+        ("sports", "non-sports", "missing", "unmapped", "conflicting"), 0
+    ) for platform in categories}
+    for event in events:
+        platform = event["platform"]
+        if platform not in counts:
+            continue
+        classification = category_group(event, categories)
+        if classification is None:
+            if event.get("category"):
+                classification = "unmapped"
+            else:
+                observed = {clean(contract.get("category")) for contract in event["contracts"]} - {None}
+                classification = "conflicting" if len(observed) > 1 else "missing"
+        counts[platform][classification] += 1
+        if scope == "all" or scope == classification:
+            selected.append(event)
+    return selected, counts
+
 def eligible(query, candidate, categories, sports):
     # Exclude known category or sport conflicts while retaining uncertain cases.
-    query_group = categories["kalshi"].get(norm(query.get("category")))
-    candidate_group = categories["polyus"].get(norm(candidate.get("category")))
+    query_platform = query.get("platform", "KALSHI")
+    candidate_platform = candidate.get("platform", "POLYUS")
+    query_group = category_group(query, categories, query_platform)
+    candidate_group = category_group(candidate, categories, candidate_platform)
     if query_group and candidate_group and query_group != candidate_group:
         return False
     if query_group == "sports" and candidate_group == "sports":
-        a, b = sport(query, sports, "KALSHI"), sport(candidate, sports, "POLYUS")
+        a = sport(query, sports, query_platform)
+        b = sport(candidate, sports, candidate_platform)
         if a and b and a != b: return False
     return True
 
-def rank(query, candidates, query_vector, candidate_vectors, k, categories, sports):
+def rank(query, candidates, query_vector, candidate_vectors, k, categories, sports, *, filter_categories=True):
     # Dot products give cosine similarity because the embeddings are normalized.
-    mask = np.fromiter((eligible(query, c, categories, sports) for c in candidates), dtype=bool, count=len(candidates))
-    indices = np.flatnonzero(mask)
-    scores = candidate_vectors[indices] @ query_vector
+    if not candidates:
+        return []
+    scores = candidate_vectors @ query_vector
+    indices = np.arange(len(candidates))
+    if filter_categories:
+        mask = np.fromiter((eligible(query, c, categories, sports) for c in candidates),
+                           dtype=bool, count=len(candidates))
+        indices, scores = indices[mask], scores[mask]
     order = np.argsort(-scores, kind="stable")[:k]
     return [(int(indices[i]), float(scores[i])) for i in order]
